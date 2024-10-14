@@ -24,7 +24,7 @@ _This project is currently in alpha and may be subject to breaking changes._
 <!-- sudo apt-get install pimpmyrice -->
 <!-- ``` -->
 
-#### Pipx
+#### [Pipx](https://pipx.pypa.io/stable/installation/)
 
 ```bash
 pipx install git+https://github.com/daddodev/pimpmyrice.git
@@ -44,10 +44,12 @@ pimp clone module pimp://alacritty
 
 ### Generate and apply a new theme
 
-Generate a theme from a local image:
+Generate a theme from an image:
 
 ```bash
 pimp gen Downloads/example.png
+# or
+pimp gen https://website.com/example.png
 ```
 
 Set the generated theme:
@@ -60,4 +62,4 @@ pimp set theme example
 
 <!-- Full documentation [**here**](./docs/overview.md). -->
 
-Full documentation coming soon!
+Full documentation coming soon™
