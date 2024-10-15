@@ -109,7 +109,7 @@ class Wallpaper:
 
     @property
     def path(self) -> str:
-        return str(self._path)
+        return self._path.as_posix()
 
     @property
     def mode(self) -> str:
