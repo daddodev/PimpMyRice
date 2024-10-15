@@ -98,7 +98,7 @@ def parse_module(name: str, yaml_path: Path) -> Module:
                     else:
                         log.debug(f"unknown os {os}")
             case str():
-                supported_os.append(Os[os_data])
+                supported_os.append(Os[os_data.upper()])
             case _:
                 log.error('"os" must be a string or a list')
     if len(supported_os) == 0:
