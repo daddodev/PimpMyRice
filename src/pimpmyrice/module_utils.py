@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Union
 from uuid import uuid4
 
 from . import files, utils
-from .config import MODULES_DIR, TEMP_DIR, Os
+from .config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
 from .logger import get_logger
 from .utils import AttrDict, Result, Timer
 
@@ -307,7 +307,10 @@ async def clone_from_git(url: str) -> str:
     if dest_dir.exists():
         raise Exception(f'module "{name}" already present')
     random = str(uuid4())
-    cmd = f'GIT_TERMINAL_PROMPT=0 git clone "{url}" {random}'
+    if CLIENT_OS == Os.WINDOWS:
+        cmd = f'set GIT_TERMINAL_PROMPT=0 && git clone "{url}" {random}'
+    else:
+        cmd = f'GIT_TERMINAL_PROMPT=0 git clone "{url}" {random}'
     res, err = await run_shell_command(cmd, cwd=TEMP_DIR)
 
     if res:
