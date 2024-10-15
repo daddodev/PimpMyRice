@@ -27,7 +27,6 @@ class Style:
 class ThemeConfig:
     theme: str | None = None
     mode: str = "dark"
-    style: str | None = None
     album: str = "default"
 
 

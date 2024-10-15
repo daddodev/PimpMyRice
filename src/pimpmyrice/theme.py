@@ -327,8 +327,6 @@ class ThemeManager:
                 mode_name = new_mode
 
             styles = []
-            if global_style := self.config.style:
-                styles.append(self.styles[global_style])
             if theme.style:
                 styles.append(theme.style)
             if mode_style := theme.modes[mode_name].style:
