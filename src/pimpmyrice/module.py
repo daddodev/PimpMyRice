@@ -128,13 +128,13 @@ class ModuleManager:
 
             return res
 
-    def run_module_command(
+    async def run_module_command(
         self, tm: ThemeManager, module_name: str, command: str
     ) -> Result:
         if module_name not in self.modules:
             return Result().error(f'module "{module_name}" not found')
 
-        return mutils.run_module_py_command(tm, name=module_name, command=command)
+        return await mutils.run_module_py_command(tm, name=module_name, command=command)
 
     async def clone(self, source: str | Path) -> Result:
         # TODO refactor exceptions

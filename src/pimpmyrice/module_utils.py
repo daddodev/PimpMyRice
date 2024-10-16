@@ -237,11 +237,16 @@ def gen_module_theme_dict(name: str, theme_dict: AttrDict) -> AttrDict:
     return m
 
 
-def run_module_py_command(tm: ThemeManager, name: str, command: str) -> Result:
+async def run_module_py_command(tm: ThemeManager, name: str, command: str) -> Result:
     res = Result()
 
     py_module = load_py_module(name, MODULES_DIR / name / f"{name}.py")
-    py_module.run_command(tm, command)
+    fn = getattr(py_module, command)
+
+    if asyncio.iscoroutinefunction(fn):
+        await fn(tm)
+    else:
+        await asyncio.to_thread(fn, tm)
 
     return res
 
