@@ -80,6 +80,12 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
                     mode["palette"] = mode["palette"].dump()
 
                     new_dic[k] = prettify(mode)
+                case Style():
+                    if v.name and v.path:
+                        new_dic[k] = v.name
+                    else:
+                        new_dic[k] = v.keywords
+
                 case _:
                     new_dic[k] = v
         return new_dic
