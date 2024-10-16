@@ -51,14 +51,15 @@ async def run_server() -> None:
     @v1_router.websocket("/ws/{client_id}")
     async def websocket_endpoint(websocket: WebSocket, client_id: int) -> None:
         await manager.connect(websocket)
+        await manager.send_personal_message(
+            json.dumps({"type": "config_changed", "config": vars(tm.config)}), websocket
+        )
         try:
             while True:
                 data = await websocket.receive_text()
-                await manager.send_personal_message(f"You wrote: {data}", websocket)
-                await manager.broadcast(f"Client #{client_id} says: {data}")
+                print(data)
         except WebSocketDisconnect:
             manager.disconnect(websocket)
-            await manager.broadcast(f"Client #{client_id} left the chat")
 
     @v1_router.get("/albums")
     async def get_albums() -> list[str]:
@@ -93,7 +94,9 @@ async def run_server() -> None:
 
         json_str = json.dumps(msg)
 
-        await manager.broadcast(json_str)
+        await manager.broadcast(
+            json.dumps({"type": "config_changed", "config": vars(tm.config)})
+        )
         return json_str
 
     @v1_router.get("/theme/{name}")
@@ -142,7 +145,10 @@ async def run_server() -> None:
 
         json_str = json.dumps(msg)
 
-        await manager.broadcast(json_str)
+        if "applied" in json_str:
+            await manager.broadcast(
+                json.dumps({"type": "config_changed", "config": vars(tm.config)})
+            )
         return json_str
 
     app.include_router(v1_router, prefix="/v1")
