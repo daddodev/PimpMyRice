@@ -78,8 +78,9 @@ def load_json(file: Path) -> dict[str, Any]:
 
 
 def save_json(file: Path, data: dict[str, Any]) -> None:
+    jsn = json.dumps(data, indent=4)
     with open(file, "w") as f:
-        json.dump(data, f, indent=4)
+        f.write(jsn)
 
 
 def import_image(image_path: Path, theme_dir: Path) -> Path:

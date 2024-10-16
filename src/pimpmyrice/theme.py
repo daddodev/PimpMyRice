@@ -259,7 +259,7 @@ class ThemeManager:
                 except Exception as e:
                     res.exception(
                         e,
-                        f'failed to regenerate colors for theme "{theme_name}"',
+                        f'failed to rewrite theme "{theme_name}"',
                     )
                     continue
         return res

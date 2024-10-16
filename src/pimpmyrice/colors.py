@@ -97,6 +97,13 @@ class Palette:
         dump = ensure_color(deepcopy(vars(self)), color=color_class)
         dump.pop("name")
         dump.pop("path")
+
+        sorted_term = dict(
+            sorted(dump["term"].items(), key=lambda v: int(v[0].removeprefix("color")))
+        )
+
+        dump["term"] = sorted_term
+
         return dump
 
 
