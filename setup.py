@@ -40,7 +40,7 @@ setuptools.setup(
     extras_require={
         "server": [
             "fastapi",
-            "uvicorn",
+            "uvicorn[standard]",
         ]
     },
 )
