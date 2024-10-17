@@ -33,7 +33,7 @@ else:
     VENV_PIP_PATH = VENV_DIR / "bin" / "pip"
 
 LOCAL_DIR = HOME_DIR / ".local/share"
-CONFIG_FILE = PIMP_CONFIG_DIR / "config.json"
+CONFIG_FILE = PIMP_CONFIG_DIR / ".current.json"
 BASE_STYLE_FILE = PIMP_CONFIG_DIR / "base_style.json"
 THEMES_DIR = PIMP_CONFIG_DIR / "themes"
 STYLES_DIR = PIMP_CONFIG_DIR / "styles"
