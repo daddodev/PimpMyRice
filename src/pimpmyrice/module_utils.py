@@ -149,7 +149,7 @@ async def run_module(module: Module, theme_dict: AttrDict) -> ModuleResult:
                 case PythonAction():
                     await run_py_module(
                         name=module.name,
-                        fn_str=action.function,
+                        fn_name=action.function,
                         theme_dict=theme_dict,
                     )
 
@@ -215,11 +215,10 @@ def load_py_module(name: str, path: Path) -> ModuleType:
 
 async def run_py_module(
     name: str,
-    fn_str: str,
+    fn_name: str,
     theme_dict: AttrDict,
 ) -> None:
-    file, fn_name = fn_str.split(".")[:2]
-    py_module = load_py_module(name, MODULES_DIR / name / f"{file}.py")
+    py_module = load_py_module(name, MODULES_DIR / name / f"{name}.py")
     fn = getattr(py_module, fn_name)
 
     if asyncio.iscoroutinefunction(fn):
