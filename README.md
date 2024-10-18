@@ -4,7 +4,8 @@ Creating and swapping rices made easy.
 
 _This project is currently in alpha and may be subject to breaking changes._
 
-![demo.gif](./demo.gif)
+https://github.com/user-attachments/assets/999c8fc1-2f67-4da5-8780-6c0e11695007
+
 
 ## What is a rice?
 
