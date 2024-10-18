@@ -97,8 +97,12 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
     dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper._path.name
 
     if for_api:
-        thumb = get_thumbnail(theme.wallpaper._path)
-        dump["wallpaper_thumb"] = thumb
+        try:
+            thumb = get_thumbnail(theme.wallpaper._path)
+            dump["wallpaper_thumb"] = thumb
+        except Exception as e:
+            log.exception(e)
+            dump["wallpaper_thumb"] = ""
 
     return dump
 

@@ -274,8 +274,8 @@ async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
         },
         "muted": {
             "color": main_color,
-            "bg": {"min_sat": 0, "max_sat": 0.3, "min_val": 0, "max_val": 0.3},
-            "fg": {"min_sat": 0.1, "max_sat": 0.1, "min_val": 0.5, "max_val": 0.7},
+            "bg": {"min_sat": 0.1, "max_sat": 0.3, "min_val": 0.8, "max_val": 1},
+            "fg": {"min_sat": 0, "max_sat": 0.1, "min_val": 0.8, "max_val": 1},
         },
         "destructive": {
             "color": accent,
@@ -328,8 +328,8 @@ async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
         },
         "muted": {
             "color": main_color,
-            "bg": {"min_sat": 0, "max_sat": 0.3, "min_val": 0, "max_val": 0.6},
-            "fg": {"min_sat": 0, "max_sat": 0.3, "min_val": 0, "max_val": 0.12},
+            "bg": {"min_sat": 0.3, "max_sat": 0.5, "min_val": 0.45, "max_val": 0.65},
+            "fg": {"min_sat": 0, "max_sat": 0.1, "min_val": 0.8, "max_val": 0.6},
         },
         "destructive": {
             "color": accent,
@@ -358,12 +358,12 @@ async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
 
     for k, v in palette.items():
         if "bg" in v and "fg" in v:
-            if v["bg"][2] > 0.6 and v["bg"][2] - v["fg"][2] < 0.65:
+            if v["bg"][2] > 0.7 and v["bg"][2] - v["fg"][2] < 0.65:
                 new_fg_v = v["bg"][2] - 0.65
                 if new_fg_v < 0.1:
                     new_fg_v = 0.1
                 v["fg"] = (v["fg"][0], v["fg"][1], new_fg_v)
-            elif v["bg"][2] < 0.6 and v["fg"][2] - v["bg"][2] < 0.65:
+            elif v["bg"][2] < 0.7 and v["fg"][2] - v["bg"][2] < 0.65:
                 new_fg_v = v["bg"][2] + 0.65
                 if new_fg_v > 0.9:
                     new_fg_v = 0.9
