@@ -229,8 +229,8 @@ async def run_py_module(
 
 def gen_module_theme_dict(name: str, theme_dict: AttrDict) -> AttrDict:
     m: AttrDict = (
-        theme_dict + theme_dict["modules_style"][name]
-        if name in theme_dict["modules_style"]
+        theme_dict + theme_dict["modules_styles"][name]
+        if name in theme_dict["modules_styles"]
         else deepcopy(theme_dict)
     )
     return m

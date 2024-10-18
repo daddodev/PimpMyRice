@@ -44,7 +44,7 @@ class Theme:
     name: str
     wallpaper: Wallpaper
     modes: dict[str, Mode] = field(default_factory=dict)
-    modules_style: dict[str, dict[str, Any]] = field(default_factory=dict)
+    modules_styles: dict[str, dict[str, Any]] = field(default_factory=dict)
     style: Style | None = None
 
     def __repr__(self) -> str:
@@ -205,13 +205,13 @@ def gen_theme_dict(
     palette = palette.copy()
     base_style = deepcopy(base_style)
 
-    theme_dict = AttrDict(base_style)
+    theme_dict = AttrDict(palette.dump(color_class=True))
 
     theme_dict["theme_name"] = theme.name
     theme_dict["wallpaper"] = theme.modes[mode_name].wallpaper
     theme_dict["mode"] = mode_name
 
-    theme_dict += palette.dump(color_class=True)
+    theme_dict += base_style
 
     if theme.style:
         theme_dict += theme.style.keywords
@@ -223,7 +223,7 @@ def gen_theme_dict(
         for style in styles:
             theme_dict += style.keywords
 
-    theme_dict["modules_style"] = deepcopy(theme.modules_style)
+    theme_dict["modules_styles"] = deepcopy(theme.modules_styles)
 
     theme_dict, pending = resolve_refs(theme_dict)
     while len(pending) > 0:
