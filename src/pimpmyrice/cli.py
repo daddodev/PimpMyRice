@@ -31,6 +31,8 @@ Options:
     --print-theme-dict -d
     --backend -b BACKEND
     --verbose -v
+
+See https://pimpmyrice.vercel.app/docs for more info.
 """
 
 import logging
