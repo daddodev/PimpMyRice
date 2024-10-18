@@ -28,6 +28,7 @@ Options:
     --style -s STYLE
     --use_modules -u MODULES
     --exclude_modules -e MODULES
+    --print-theme-dict -d
     --backend -b BACKEND
     --verbose -v
 """

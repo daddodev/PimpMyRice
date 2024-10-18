@@ -72,6 +72,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         "mode_name": args["--mode"],
         "styles_names": args["--style"],
         "palette_name": args["--palette"],
+        "print_theme_dict": args["--print-theme-dict"],
     }
 
     if modules := args["--use_modules"]:

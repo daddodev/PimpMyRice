@@ -4,6 +4,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+import rich
+
 from . import theme_utils as tutils
 from .colors import Palette, exp_gen_palette, get_palettes
 from .config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
@@ -297,6 +299,7 @@ class ThemeManager:
         album: str | None = None,
         use_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
+        print_theme_dict: bool = False,
     ) -> Result:
         res = Result()
 
@@ -353,6 +356,10 @@ class ThemeManager:
                 palette=palette,
             )
 
+            if print_theme_dict:
+                pretty = rich.pretty.pretty_repr(theme_dict)
+                res.info("generated theme_dict:\r\n" + pretty)
+
             res.info(f'applying theme "{theme.name}"...')
 
             modules_res = await self.mm.run(theme_dict, use_modules, exclude_modules)
@@ -383,6 +390,7 @@ class ThemeManager:
         theme_name_includes: str | None = None,
         use_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
+        print_theme_dict: bool = False,
     ) -> Result:
         res = Result()
 
@@ -415,6 +423,7 @@ class ThemeManager:
             palette_name=palette_name,
             use_modules=use_modules,
             exclude_modules=exclude_modules,
+            print_theme_dict=print_theme_dict,
         )
 
         res += apply_res
