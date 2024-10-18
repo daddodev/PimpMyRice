@@ -1,10 +1,23 @@
 # 🍙 PimpMyRice
 
-Creating and swapping rices made easy
+Creating and swapping rices made easy.
 
 _This project is currently in alpha and may be subject to breaking changes._
 
 ![demo.gif](./demo.gif)
+
+## What is a rice?
+
+> Ricing refers to the process of customizing and optimizing the visual appearance of a desktop environment, particularly in Linux or Unix-based systems.<br />
+It involves modifying elements such as themes, icons, fonts, window managers, and widgets to create a unique and aesthetically pleasing interface.<br />
+A well-customized setup, called a "rice", showcases the user's attention to detail and creativity.
+
+Take a look at [r/unixporn](https://www.reddit.com/r/unixporn) for inspiration.
+
+## What does PimpMyRice do?
+
+PimpMyRice allows you to generate, organize and apply your rices.<br />
+It applies themes through modules, each module being responsible for styling a specific program (eg: [discord](https://github.com/pimpmyrice-modules/betterdiscord)).
 
 ## Quick start
 
@@ -28,38 +41,34 @@ _This project is currently in alpha and may be subject to breaking changes._
 
 ```bash
 pipx install git+https://github.com/daddodev/pimpmyrice.git
+# or install with server dependencies
+pipx install "PimpMyRice[server] @ git+https://github.com/daddodev/pimpmyrice.git"
 ```
 
 ### Add some modules
 
-<!-- [Create your own modules]() from scratch or clone from the [official modules](). -->
 Create your own modules from scratch or clone from the [official modules](https://github.com/pimpmyrice-modules).
 
 For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacritty) module:
 
 ```bash
-pimp clone module pimp://alacritty
+rice clone module pimp://alacritty
 ```
-
 
 ### Generate and apply a new theme
 
 Generate a theme from an image:
 
 ```bash
-pimp gen Downloads/example.png
+rice gen Downloads/example.png
 # or
-pimp gen https://website.com/example.png
+rice gen https://website.com/example.png
 ```
 
 Set the generated theme:
 
 ```bash
-pimp set theme example
+rice set theme example
 ```
 
-## Documentation
-
-<!-- Full documentation [**here**](./docs/overview.md). -->
-
-Full documentation coming soon™
+## [Documentation](https://pimpmyrice.vercel.app/docs)

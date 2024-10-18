@@ -20,7 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    entry_points={"console_scripts": ["pimp=pimpmyrice.__main__:main"]},
+    entry_points={"console_scripts": ["rice=pimpmyrice.__main__:main"]},
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.12",
