@@ -83,7 +83,8 @@ def parse_theme(
         return Theme(path=Path(), name=name, wallpaper=Wallpaper(_path=Path()))
 
 
-def parse_module(name: str, yaml_path: Path) -> Module:
+def parse_module(yaml_path: Path) -> Module:
+    name = yaml_path.parent.name
     data = files.load_yaml(yaml_path)
 
     supported_os = []

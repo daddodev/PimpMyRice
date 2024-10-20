@@ -44,8 +44,6 @@ class ConfigDirWatchdog(FileSystemEventHandler):
 
         self.debounce_table[event_id] = time.time()
 
-        # print(event)
-
         if path == BASE_STYLE_FILE and (
             event.event_type == "modified" or event.event_type == "created"
         ):
@@ -87,6 +85,11 @@ class ConfigDirWatchdog(FileSystemEventHandler):
                     and self.tm.config.album == album_name
                 ):
                     self.run_async(self.tm.apply_theme())
+
+        elif path.name == "module.yaml" and path.parents[1] == MODULES_DIR:
+            module_name = path.parent.name
+            if event.event_type == "modified":
+                self.tm.mm.load_module(module_name)
 
     def run_async(self, f: Awaitable[Any]) -> None:
         self.loop.run_until_complete(f)

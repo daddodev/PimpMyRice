@@ -28,20 +28,31 @@ class ModuleManager:
         timer = Timer()
 
         for module_dir in MODULES_DIR.iterdir():
-            module_name = module_dir.name
             module_yaml = module_dir / "module.yaml"
             if not module_yaml.exists():
                 continue
             try:
-                module = parse_module(name=module_name, yaml_path=module_yaml)
+                module = parse_module(yaml_path=module_yaml)
                 modules[module.name] = module
             except Exception as e:
                 log.exception(e)
-                log.error(f'failed loading module "{module_name}": {e}')
+                log.error(f'failed loading module "{module_dir.name}": {e}')
 
         log.debug(f"{len(modules)} modules loaded in {timer.elapsed():.4f} sec")
 
         return modules
+
+    def load_module(self, name: str) -> None:
+        module_yaml = MODULES_DIR / name / "module.yaml"
+        if not module_yaml.exists():
+            return
+        try:
+            module = parse_module(yaml_path=module_yaml)
+            self.modules[module.name] = module
+            log.info(f'module "{module.name}" loaded')
+        except Exception as e:
+            log.exception(e)
+            log.error(f'failed loading module "{name}": {e}')
 
     async def run(
         self,
@@ -150,7 +161,6 @@ class ModuleManager:
                 name = await mutils.clone_from_git(source)
 
             module = parse_module(
-                name=name,
                 yaml_path=MODULES_DIR / name / "module.yaml",
             )
 
