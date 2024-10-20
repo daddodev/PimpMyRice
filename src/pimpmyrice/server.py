@@ -9,7 +9,7 @@ from .files import ConfigDirWatchdog
 from .logger import LogLevel, get_logger
 from .theme import ThemeManager
 from .theme_utils import dump_theme
-from .utils import Lock
+from .utils import Lock, Result
 
 log = get_logger(__name__)
 
@@ -134,6 +134,22 @@ async def run_server() -> None:
     @v1_router.post("/cli_command")
     async def cli_command(req: Request) -> str:
         req_json = await req.json()
+
+        if req_json["server"] and req_json["reload"]:
+            nonlocal tm
+            tm = ThemeManager()
+
+            result = Result().success("configuration reloaded")
+
+            msg = {
+                "event": "command_executed",
+                "config": vars(tm.config),
+                "result": result.dump(),
+            }
+
+            json_str = json.dumps(msg)
+
+            return json_str
 
         result = await process_args(tm, req_json)
 

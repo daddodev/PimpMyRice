@@ -204,16 +204,16 @@ def is_process_running(name: str | None = None, pid: int | None = None) -> bool:
     return False
 
 
-def is_locked(lockfile: Path) -> bool:
+def is_locked(lockfile: Path) -> tuple[bool, int]:
     if lockfile.exists():
         with open(lockfile, "r") as f:
-            file_pid = f.read()
+            file_pid = int(f.read())
 
-        if is_process_running(pid=int(file_pid)):
-            return True
+        if is_process_running(pid=file_pid):
+            return True, file_pid
 
         lockfile.unlink()
-    return False
+    return False, 0
 
 
 class Lock:

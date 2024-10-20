@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 from .colors import palette_display_string
-from .config import (BASE_STYLE_FILE, MODULES_DIR, PALETTES_DIR, STYLES_DIR,
-                     THEMES_DIR)
+from .config import (ALBUMS_DIR, BASE_STYLE_FILE, MODULES_DIR, PALETTES_DIR,
+                     STYLES_DIR)
 from .logger import get_logger
 from .theme import ThemeManager
 from .utils import Result
@@ -26,7 +26,7 @@ async def process_edit_args(args: dict[str, Any]) -> None:
     elif args["theme"]:
         theme = args["THEME"]
 
-        theme_path = THEMES_DIR / album / theme / "theme.json"
+        theme_path = ALBUMS_DIR / album / theme / "theme.json"
         if not theme_path.is_file():
             log.error(f'theme "{theme}" not found in album "{album}"')
             return

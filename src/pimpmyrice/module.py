@@ -56,7 +56,7 @@ class ModuleManager:
             if m not in self.modules:
                 return res.error(f'module "{m}" not found')
 
-        if is_locked(LOCK_FILE):
+        if is_locked(LOCK_FILE)[0]:
             return res.error("another instance is applying a theme!")
 
         with Lock(LOCK_FILE):

@@ -17,7 +17,7 @@ Usage:
     pimp edit module MODULE [options]
     pimp regen [options]
     pimp rewrite [options]
-    pimp server [options]
+    pimp server (start|stop|reload) [options]
     pimp info [options]
 
 Options:
@@ -36,6 +36,8 @@ See https://pimpmyrice.vercel.app/docs for more info.
 """
 
 import logging
+import os
+import signal
 
 from docopt import DocoptExit, docopt  # type:ignore
 
@@ -66,14 +68,26 @@ async def cli() -> None:
         await process_edit_args(args)
         return
 
-    server_running = is_locked(SERVER_PID_FILE)
+    server_running, server_pid = is_locked(SERVER_PID_FILE)
 
     if args["server"]:
-        if server_running:
-            log.error("server already running")
-        else:
-            await run_server()
-        return
+        if args["start"]:
+            if server_running:
+                log.error("server already running")
+            else:
+                await run_server()
+            return
+        elif args["stop"]:
+            if server_running:
+                os.kill(server_pid, signal.SIGTERM)
+                log.info("server stopped")
+            else:
+                log.error("server not running")
+            return
+        elif args["reload"]:
+            if not server_running:
+                log.error("server not running")
+                return
 
     if server_running:
         send_to_server(args)

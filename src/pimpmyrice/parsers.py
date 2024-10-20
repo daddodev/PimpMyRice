@@ -35,19 +35,18 @@ def parse_wallpaper(
 
 
 def parse_theme(
-    name: str,
     path: Path,
     global_styles: dict[str, Style],
     global_palettes: dict[str, Palette],
 ) -> Theme:
-    theme_path = path / name
+    name = path.name
 
     try:
-        data = files.load_json(theme_path / "theme.json")
-        data["wallpaper"] = parse_wallpaper(data["wallpaper"], theme_path)
+        data = files.load_json(path / "theme.json")
+        data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
         for mode_name, mode in data["modes"].items():
             if "wallpaper" in mode:
-                mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], theme_path)
+                mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
             else:
                 mode["wallpaper"] = data["wallpaper"]
 
@@ -72,7 +71,7 @@ def parse_theme(
             elif isinstance(data["style"], dict):
                 data["style"] = Style("", Path(), keywords=data["style"])
 
-        data["path"] = theme_path
+        data["path"] = path
 
         theme = Theme(name=name, **data)
 

@@ -8,7 +8,7 @@ import rich
 
 from . import theme_utils as tutils
 from .colors import Palette, exp_gen_palette, get_palettes
-from .config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
+from .config import ALBUMS_DIR, BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR
 from .files import download_file, load_json, save_json
 from .logger import get_logger
 from .module import ModuleManager
@@ -67,7 +67,7 @@ class ThemeManager:
         timer = Timer()
 
         albums = {
-            folder.name: self.get_themes(folder) for folder in THEMES_DIR.iterdir()
+            folder.name: self.get_themes(folder) for folder in ALBUMS_DIR.iterdir()
         }
 
         themes_n = 0
@@ -80,11 +80,15 @@ class ThemeManager:
 
     def get_themes(self, path: Path) -> dict[str, Theme]:
         themes = {
-            folder.name: parse_theme(folder.name, path, self.styles, self.palettes)
+            folder.name: parse_theme(folder, self.styles, self.palettes)
             for folder in path.iterdir()
             if (folder / "theme.json").exists()
         }
         return themes
+
+    def get_theme(self, path: Path) -> Theme:
+        theme = parse_theme(path, self.styles, self.palettes)
+        return theme
 
     async def generate_theme(
         self,
@@ -177,17 +181,17 @@ class ThemeManager:
             theme.name = tutils.valid_theme_name(
                 name=theme.name, album=self.albums[album]
             )
-            theme_dir = THEMES_DIR / album / theme.name
+            theme_dir = ALBUMS_DIR / album / theme.name
             theme_dir.mkdir()
 
         elif old_name != theme.name:
             theme.name = tutils.valid_theme_name(
                 name=theme.name, album=self.albums[album]
             )
-            theme_dir = THEMES_DIR / album / theme.name
-            (THEMES_DIR / album / old_name).rename(theme_dir)
+            theme_dir = ALBUMS_DIR / album / theme.name
+            (ALBUMS_DIR / album / old_name).rename(theme_dir)
         else:
-            theme_dir = THEMES_DIR / album / theme.name
+            theme_dir = ALBUMS_DIR / album / theme.name
 
         # NOTE full path update on rename is handled by dump_theme
         #      as it leaves only the filename
@@ -200,7 +204,7 @@ class ThemeManager:
 
         parsed_theme = parse_theme(
             theme.name,
-            path=THEMES_DIR / album,
+            path=ALBUMS_DIR / album,
             global_styles=self.styles,
             global_palettes=self.palettes,
         )
@@ -279,8 +283,8 @@ class ThemeManager:
 
         theme = self.albums[album][theme_name]
 
-        if theme.path.parent.parent != THEMES_DIR:
-            return res.error(f'"{theme.path}" not in "{THEMES_DIR}"')
+        if theme.path.parent.parent != ALBUMS_DIR:
+            return res.error(f'"{theme.path}" not in "{ALBUMS_DIR}"')
 
         shutil.rmtree(theme.path)
 
