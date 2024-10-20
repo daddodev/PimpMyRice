@@ -53,7 +53,7 @@ Create your own modules from scratch or clone from the [official modules](https:
 For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacritty) module:
 
 ```bash
-rice clone module pimp://alacritty
+pimp clone module pimp://alacritty
 ```
 
 ### Generate and apply a new theme
@@ -61,15 +61,15 @@ rice clone module pimp://alacritty
 Generate a theme from an image:
 
 ```bash
-rice gen Downloads/example.png
+pimp gen Downloads/example.png
 # or
-rice gen https://website.com/example.png
+pimp gen https://website.com/example.png
 ```
 
 Set the generated theme:
 
 ```bash
-rice set theme example
+pimp set theme example
 ```
 
 ## [Documentation](https://pimpmyrice.vercel.app/docs)
