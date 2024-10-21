@@ -1,5 +1,4 @@
 import json
-from functools import partial
 from typing import Any
 
 import requests
@@ -51,10 +50,8 @@ async def run_server() -> None:
 
     tm.event_handler.subscribe(
         "theme_applied",
-        partial(
-            manager.broadcast,
-            json.dumps({"type": "config_changed", "config": vars(tm.config)}),
-        ),
+        manager.broadcast,
+        json.dumps({"type": "config_changed", "config": vars(tm.config)}),
     )
 
     @v1_router.websocket("/ws/{client_id}")
