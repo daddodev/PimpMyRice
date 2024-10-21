@@ -17,7 +17,7 @@ Usage:
     pimp edit module MODULE [options]
     pimp regen [options]
     pimp rewrite [options]
-    pimp server (start|stop|reload) [options]
+    pimp (start|stop|reload) server [options]
     pimp info [options]
 
 Options:
