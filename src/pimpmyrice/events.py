@@ -1,12 +1,14 @@
 from functools import partial
-from typing import Any
+from typing import Any, Callable, Coroutine
 
 
 class EventHandler:
     def __init__(self) -> None:
-        self.subscribers: dict[str, list[Any]] = {}
+        self.subscribers: dict[str, list[Callable[[], Coroutine[Any, Any, None]]]] = {}
 
-    def subscribe(self, event_name: str, fn, *args) -> None:
+    def subscribe(
+        self, event_name: str, fn: Callable[..., Coroutine[Any, Any, None]], *args: Any
+    ) -> None:
         if event_name not in self.subscribers:
             self.subscribers[event_name] = []
 
