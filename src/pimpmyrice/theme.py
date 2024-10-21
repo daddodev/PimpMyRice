@@ -9,6 +9,7 @@ import rich
 from . import theme_utils as tutils
 from .colors import Palette, exp_gen_palette, get_palettes
 from .config import ALBUMS_DIR, BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR
+from .events import EventHandler
 from .files import download_file, load_json, save_json
 from .logger import get_logger
 from .module import ModuleManager
@@ -26,6 +27,7 @@ class ThemeManager:
         self.palettes = self.get_palettes()
         self.albums = self.get_albums()
         self.config = self.get_config()
+        self.event_handler = EventHandler()
         self.mm = ModuleManager()
 
     def get_config(self) -> ThemeConfig:
@@ -380,6 +382,8 @@ class ThemeManager:
                 res.warning(f'theme "{theme_name}" {mode_name} applied with errors')
             else:
                 res.success(f'theme "{theme_name}" {mode_name} applied')
+
+            await self.event_handler.publish("theme_applied")
         except Exception as e:
             res.exception(e, f'error applying theme "{theme_name}"')
         finally:

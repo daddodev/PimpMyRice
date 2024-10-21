@@ -1,4 +1,5 @@
 import json
+from functools import partial
 from typing import Any
 
 import requests
@@ -48,6 +49,14 @@ async def run_server() -> None:
     manager = ConnectionManager()
     v1_router = APIRouter()
 
+    tm.event_handler.subscribe(
+        "theme_applied",
+        partial(
+            manager.broadcast,
+            json.dumps({"type": "config_changed", "config": vars(tm.config)}),
+        ),
+    )
+
     @v1_router.websocket("/ws/{client_id}")
     async def websocket_endpoint(websocket: WebSocket, client_id: int) -> None:
         await manager.connect(websocket)
@@ -94,9 +103,9 @@ async def run_server() -> None:
 
         json_str = json.dumps(msg)
 
-        await manager.broadcast(
-            json.dumps({"type": "config_changed", "config": vars(tm.config)})
-        )
+        # await manager.broadcast(
+        #     json.dumps({"type": "config_changed", "config": vars(tm.config)})
+        # )
         return json_str
 
     @v1_router.get("/theme/{name}")
@@ -161,10 +170,10 @@ async def run_server() -> None:
 
         json_str = json.dumps(msg)
 
-        if "applied" in json_str:
-            await manager.broadcast(
-                json.dumps({"type": "config_changed", "config": vars(tm.config)})
-            )
+        # if "applied" in json_str:
+        #     await manager.broadcast(
+        #         json.dumps({"type": "config_changed", "config": vars(tm.config)})
+        #     )
         return json_str
 
     app.include_router(v1_router, prefix="/v1")
