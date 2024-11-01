@@ -205,8 +205,7 @@ class ThemeManager:
         save_json(theme_dir / "theme.json", dump)
 
         parsed_theme = parse_theme(
-            theme.name,
-            path=ALBUMS_DIR / album,
+            path=ALBUMS_DIR / album / theme.name,
             global_styles=self.styles,
             global_palettes=self.palettes,
         )

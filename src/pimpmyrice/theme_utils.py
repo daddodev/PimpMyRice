@@ -221,7 +221,8 @@ def gen_theme_dict(
         theme_dict += theme.style.keywords
 
     if theme.modes[mode_name].style:
-        theme_dict += theme.modes[mode_name].style.keywords
+        # idk why "type: ignore" is needed
+        theme_dict += theme.modes[mode_name].style.keywords  # type: ignore
 
     if styles:
         for style in styles:
