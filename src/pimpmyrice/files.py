@@ -59,10 +59,10 @@ class ConfigDirWatchdog(FileSystemEventHandler):
             elif event.event_type == "deleted":
                 self.tm.albums.pop(album_name)
                 log.info(f'album "{album_name}" deleted')
-            elif event.dest_path:  # type: ignore
-                new_album_name = Path(event.dest_path).name  # type: ignore
+            elif hasattr(event, "dest_path"):
+                new_album_name = Path(event.dest_path).name
                 self.tm.albums[new_album_name] = self.tm.get_themes(
-                    Path(event.dest_path)  # type:ignore
+                    Path(event.dest_path)
                 )
                 self.tm.albums.pop(album_name)
                 log.info(f'album "{album_name}" renamed to "{new_album_name}"')
@@ -75,16 +75,16 @@ class ConfigDirWatchdog(FileSystemEventHandler):
             album_name = path.parents[1].name
             if event.event_type == "modified":
                 self.tm.albums[album_name][theme_name] = self.tm.get_theme(path.parent)
-                log.info(
-                    f'theme "{theme_name}" \
-                            in album {album_name} loaded'
-                )
+                log.info(f'theme "{theme_name}" in album {album_name} loaded')
 
                 if (
                     self.tm.config.theme == theme_name
                     and self.tm.config.album == album_name
                 ):
                     self.run_async(self.tm.apply_theme())
+            elif event.event_type == "deleted":
+                self.tm.albums[album_name].pop(theme_name)
+                log.info(f'theme "{theme_name}" in album {album_name} deleted')
 
         elif path.name == "module.yaml" and path.parents[1] == MODULES_DIR:
             module_name = path.parent.name
