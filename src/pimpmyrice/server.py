@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -100,9 +101,6 @@ async def run_server() -> None:
 
         json_str = json.dumps(msg)
 
-        # await manager.broadcast(
-        #     json.dumps({"type": "config_changed", "config": vars(tm.config)})
-        # )
         return json_str
 
     @v1_router.get("/theme/{name}")
@@ -167,10 +165,6 @@ async def run_server() -> None:
 
         json_str = json.dumps(msg)
 
-        # if "applied" in json_str:
-        #     await manager.broadcast(
-        #         json.dumps({"type": "config_changed", "config": vars(tm.config)})
-        #     )
         return json_str
 
     app.include_router(v1_router, prefix="/v1")
@@ -185,6 +179,12 @@ async def run_server() -> None:
 def send_to_server(
     args: dict[str, Any], address: str = "http://127.0.0.1:5000"
 ) -> None:
+    if args["IMAGE"]:
+        args["IMAGE"] = [
+            str(Path(img).absolute())
+            for img in args["IMAGE"]
+            if not img.startswith(("http://", "https://"))
+        ]
 
     log.debug(f"connecting to {address}")
 
