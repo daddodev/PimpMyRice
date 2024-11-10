@@ -34,13 +34,6 @@ setuptools.setup(
         "scikit-learn",
         "opencv-python",
         "rich",
-        "watchdog",
         "typing_extensions",
     ],
-    extras_require={
-        "server": [
-            "fastapi",
-            "uvicorn[standard]",
-        ]
-    },
 )

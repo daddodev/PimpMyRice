@@ -42,8 +42,6 @@ It applies themes through modules, each module being responsible for styling a s
 
 ```bash
 pipx install git+https://github.com/daddodev/pimpmyrice.git
-# or install with server dependencies
-pipx install "PimpMyRice[server] @ git+https://github.com/daddodev/pimpmyrice.git"
 ```
 
 ### Add some modules
