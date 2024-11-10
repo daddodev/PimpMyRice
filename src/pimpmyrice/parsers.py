@@ -5,9 +5,8 @@ from . import files
 from .colors import Palette, ensure_color
 from .config import CLIENT_OS, MODULES_DIR, Os
 from .logger import get_logger
-from .module_utils import (Condition, FileAction, IfAction, InitAction,
-                           LinkAction, Module, PythonAction, RunAction,
-                           ShellAction)
+from .module_utils import (FileAction, IfRunning, InitAction, LinkAction,
+                           Module, PythonAction, RunAction, ShellAction)
 from .theme_utils import Mode, Style, Theme, Wallpaper, WallpaperMode
 from .utils import parse_string_vars
 
@@ -151,24 +150,21 @@ def parse_module(yaml_path: Path) -> Module:
                     f'in "{name}": "run" must be a list of "action: content"'
                 )
 
-            is_if = False
             for action, content in run_action.items():
-                if is_if:
-                    if action.upper() not in vars(Condition):
-                        raise Exception(
-                            f'Unknown if condition "{action}". Must be one of: "running", "exists", "python".'
-                        )
-
-                    condition = Condition[action.upper()]
-                    run.append(IfAction(condition=condition, value=content))
-                    continue
                 match action:
-                    case "if":
-                        is_if = True
+                    case "if_running":
+                        if content[0] == "!":
+                            should_be_running = False
+                            content = content[1:]
+                        else:
+                            should_be_running = True
+                        run.append(IfRunning(content, should_be_running))
+
                     case "shell":
                         if not isinstance(content, str):
                             raise Exception('"shell" action value must be a string')
                         run.append(ShellAction(command=content))
+
                     case "file":
                         match content:
                             case str(content):
@@ -188,6 +184,7 @@ def parse_module(yaml_path: Path) -> Module:
                                 target=target,
                             )
                         )
+
                     case "python":
                         match content:
                             case str(content):
@@ -196,9 +193,10 @@ def parse_module(yaml_path: Path) -> Module:
                                 raise Exception(
                                     '"python:" must be a string indicating "file.function"'
                                 )
+
                     case _:
                         raise Exception(
-                            f'Unknown action {action}. Must be one of: "shell", "file", "python".'
+                            f'Unknown action {action}. Must be one of: "shell", "file", "python", "if_running".'
                         )
 
     module = Module(

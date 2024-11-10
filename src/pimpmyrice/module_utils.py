@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
@@ -34,12 +35,6 @@ log = get_logger(__name__)
 #         super().__init__(self.message)
 
 
-class Condition(Enum):
-    RUNNING = 1
-    EXISTS = 2
-    PYTHON = 3
-
-
 @dataclass
 class ShellAction:
     command: str
@@ -56,13 +51,26 @@ class PythonAction:
     function: str
 
 
-@dataclass
-class IfAction:
-    condition: Condition
-    value: str
+class IfAction(ABC):
+    @abstractmethod
+    def check(self) -> bool: ...
+
+
+class IfRunning(IfAction):
+    def __init__(self, program_name: str, should_be_running: bool = True):
+        self.program_name = program_name
+        self.should_be_running = should_be_running
+
+    def check(self) -> bool:
+        running = utils.is_process_running(self.program_name)
+        if self.should_be_running:
+            return running
+        else:
+            return not running
 
     def __str__(self) -> str:
-        return f"{self.condition.name}: {self.value}"
+        return f'if "{self.program_name}" {"running" if self.should_be_running
+                                           else "not running"}'
 
 
 RunAction = Union[ShellAction, FileAction, PythonAction, IfAction]
@@ -92,15 +100,6 @@ class ModuleResult(Result):
     name: str = ""
 
 
-def check_condition(action: IfAction) -> bool:
-    match action.condition:
-        case Condition.RUNNING:
-            running = utils.is_process_running(action.value)
-            return running
-        case _:
-            raise Exception(f'condition "{action.condition.name}" not implemented')
-
-
 async def run_module(module: Module, theme_dict: AttrDict) -> ModuleResult:
     res = ModuleResult(name=module.name)
     timer = Timer()
@@ -109,8 +108,8 @@ async def run_module(module: Module, theme_dict: AttrDict) -> ModuleResult:
         try:
             match action:
                 case IfAction():
-                    should_run = check_condition(action)
-                    if not should_run:
+                    check_ok = action.check()
+                    if not check_ok:
                         return res.debug(
                             f'interrupted, condition "{action}" returned false',
                             module.name,
