@@ -47,7 +47,7 @@ class ShellAction:
 
 @dataclass
 class FileAction:
-    template: Path
+    template: str
     target: str
 
 
@@ -131,6 +131,13 @@ async def run_module(module: Module, theme_dict: AttrDict) -> ModuleResult:
                         )
 
                 case FileAction():
+                    template = Path(
+                        utils.parse_string_vars(
+                            string=action.template,
+                            module_name=module.name,
+                            theme_dict=theme_dict,
+                        )
+                    )
                     target = Path(
                         utils.parse_string_vars(
                             string=action.target,
@@ -140,8 +147,9 @@ async def run_module(module: Module, theme_dict: AttrDict) -> ModuleResult:
                     )
                     if not target.parent.exists():
                         target.parent.mkdir(parents=True)
+
                     gen_file(
-                        template=action.template,
+                        template=template,
                         target=target,
                         theme_dict=theme_dict,
                     )
