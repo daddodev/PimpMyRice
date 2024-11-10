@@ -46,7 +46,7 @@ pipx install git+https://github.com/daddodev/pimpmyrice.git
 
 ### Add some modules
 
-Create your own modules from scratch or clone from the [official modules](https://github.com/pimpmyrice-modules).
+Create your own modules from scratch or clone from the [official modules](https://github.com/orgs/PimpMyRice-modules/repositories).
 
 For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacritty) module:
 
