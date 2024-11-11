@@ -184,6 +184,8 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, ...], int]]:
 
 
 async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
+    # TODO refactor everything
+
     def apply_rule(clr: Tuple[float, ...], rule: dict[str, float]) -> Tuple[float, ...]:
         h, s, v = clr
 

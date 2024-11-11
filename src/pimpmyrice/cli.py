@@ -1,4 +1,6 @@
 """
+See https://pimpmyrice.vercel.app/docs for more info.
+
 Usage:
     pimp gen IMAGE... [options] [--apply]
     pimp random [options]
@@ -20,7 +22,7 @@ Usage:
     pimp info [options]
 
 Options:
-    --album -a ALBUM
+    --tags -a TAGS
     --mode -m MODE
     --name -n NAME
     --palette -p PALETTE
@@ -30,8 +32,6 @@ Options:
     --print-theme-dict -d
     --backend -b BACKEND
     --verbose -v
-
-See https://pimpmyrice.vercel.app/docs for more info.
 """
 
 import logging

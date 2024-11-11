@@ -8,7 +8,7 @@ import rich
 
 from . import theme_utils as tutils
 from .colors import Palette, exp_gen_palette, get_palettes
-from .config import ALBUMS_DIR, BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR
+from .config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
 from .events import EventHandler
 from .files import download_file, load_json, save_json
 from .logger import get_logger
@@ -25,16 +25,14 @@ class ThemeManager:
         self.base_style = self.get_base_style()
         self.styles = self.get_styles()
         self.palettes = self.get_palettes()
-        self.albums = self.get_albums()
+        self.themes = self.get_themes()
         self.config = self.get_config()
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
 
     def get_config(self) -> ThemeConfig:
         config = ThemeConfig(**load_json(CONFIG_FILE))
-        if config.album not in self.albums:
-            config.album = "default"
-        if config.theme not in self.albums[config.album]:
+        if config.theme not in self.themes:
             config.theme = None
         return config
 
@@ -65,38 +63,24 @@ class ThemeManager:
     def get_palettes() -> dict[str, Palette]:
         return get_palettes()
 
-    def get_albums(self) -> dict[str, dict[str, Theme]]:
+    def get_themes(self) -> dict[str, Theme]:
         timer = Timer()
 
-        albums = {
-            folder.name: self.get_themes(folder) for folder in ALBUMS_DIR.iterdir()
-        }
-
-        themes_n = 0
-        for a in albums:
-            themes_n += len(albums[a])
-
-        log.debug(f"{themes_n} themes loaded in {timer.elapsed():.4f} sec")
-
-        return albums
-
-    def get_themes(self, path: Path) -> dict[str, Theme]:
         themes = {
             folder.name: parse_theme(folder, self.styles, self.palettes)
-            for folder in path.iterdir()
+            for folder in THEMES_DIR.iterdir()
             if (folder / "theme.json").exists()
         }
-        return themes
 
-    def get_theme(self, path: Path) -> Theme:
-        theme = parse_theme(path, self.styles, self.palettes)
-        return theme
+        log.debug(f"{len(themes)} themes loaded in {timer.elapsed():.4f} sec")
+
+        return themes
 
     async def generate_theme(
         self,
         image: str,
         name: str | None = None,
-        album: str | None = None,
+        tags: list[str] | None = None,
         backend: str = "pimp",
         apply: bool = False,
     ) -> Result:
@@ -111,20 +95,15 @@ class ThemeManager:
         else:
             file = Path(image)
 
-        if not album:
-            album = "default"
-        elif album not in self.albums:
-            return res.error(f'album "{album}" not found')
-
         gen_res = await tutils.gen_from_img(
-            image=file, name=name, album=self.albums[album], backend=backend
+            image=file, name=name, themes=self.themes, backend=backend
         )
         res += gen_res
         if not gen_res.value:
             return res.error("could not generate theme")
 
         # TODO generate name here
-        save_res = await self.save_theme(gen_res.value, album=album)
+        save_res = await self.save_theme(gen_res.value)
         res += save_res
         if save_res.value:
             res.success(f'theme "{save_res.value}" generated')
@@ -132,7 +111,7 @@ class ThemeManager:
             return res.error("could not generate theme")
 
         if apply:
-            apply_res = await self.apply_theme(save_res.value, album=album)
+            apply_res = await self.apply_theme(save_res.value)
             res += apply_res
 
         return res
@@ -141,59 +120,41 @@ class ThemeManager:
         self,
         theme_name: str,
         new_name: str,
-        album: str | None = None,
     ) -> Result:
         res = Result()
 
-        if not album:
-            album = "default"
-        elif album not in self.albums:
-            return res.error(f'album "{album}" not found')
+        if theme_name not in self.themes:
+            return res.error(f'theme "{theme_name}" not found')
 
-        if theme_name not in self.albums[album]:
-            return res.error(f'theme "{theme_name}" not found in album "{album}"')
-
-        theme = self.albums[album][theme_name]
+        theme = self.themes[theme_name]
         old_name = theme.name
         theme.name = new_name
 
-        save_res = await self.save_theme(theme, album, old_name)
+        save_res = await self.save_theme(theme, old_name=old_name)
         res += save_res
 
         if not save_res.value:
-            return res.error(f'failed renaming theme "{theme_name}" in album "{album}"')
-        return res.success(
-            f'renamed theme "{theme_name}" to "{new_name}" in album "{album}"'
-        )
+            return res.error(f'failed renaming theme "{theme_name}"')
+        return res.success(f'renamed theme "{theme_name}" to "{new_name}"')
 
     async def save_theme(
         self,
         theme: Theme,
-        album: str | None = None,
         old_name: str | None = None,
     ) -> Result[str]:
         res: Result[str] = Result()
 
-        if not album:
-            album = "default"
-        elif album not in self.albums:
-            return res.error(f'album "{album}" not found')
-
         if not old_name:
-            theme.name = tutils.valid_theme_name(
-                name=theme.name, album=self.albums[album]
-            )
-            theme_dir = ALBUMS_DIR / album / theme.name
+            theme.name = tutils.valid_theme_name(name=theme.name, themes=self.themes)
+            theme_dir = THEMES_DIR / theme.name
             theme_dir.mkdir()
 
         elif old_name != theme.name:
-            theme.name = tutils.valid_theme_name(
-                name=theme.name, album=self.albums[album]
-            )
-            theme_dir = ALBUMS_DIR / album / theme.name
-            (ALBUMS_DIR / album / old_name).rename(theme_dir)
+            theme.name = tutils.valid_theme_name(name=theme.name, themes=self.themes)
+            theme_dir = THEMES_DIR / theme.name
+            (THEMES_DIR / old_name).rename(theme_dir)
         else:
-            theme_dir = ALBUMS_DIR / album / theme.name
+            theme_dir = THEMES_DIR / theme.name
 
         # NOTE full path update on rename is handled by dump_theme
         #      as it leaves only the filename
@@ -205,15 +166,15 @@ class ThemeManager:
         save_json(theme_dir / "theme.json", dump)
 
         parsed_theme = parse_theme(
-            path=ALBUMS_DIR / album / theme.name,
+            path=THEMES_DIR / theme.name,
             global_styles=self.styles,
             global_palettes=self.palettes,
         )
 
-        self.albums[album][theme.name] = parsed_theme
+        self.themes[theme.name] = parsed_theme
 
         if old_name and old_name != theme.name:
-            self.albums[album].pop(old_name)
+            self.themes.pop(old_name)
 
             if self.config.theme == old_name:
                 self.config.theme = theme.name
@@ -224,74 +185,56 @@ class ThemeManager:
     async def rewrite_themes(
         self,
         regen_colors: bool = False,
-        album: str | None = None,
         name_includes: str | None = None,
     ) -> Result:
         # TODO refactor
         res = Result()
 
-        if not album:
-            albums = self.albums
-        elif album not in self.albums:
-            return res.error(f'album "{album}" not found')
-        else:
-            albums = {album: self.albums[album]}
-
-        for album_name, themes in albums.items():
-            for theme_name, theme in themes.items():
-                try:
-                    if name_includes and name_includes not in theme_name:
-                        continue
-                    if regen_colors:
-                        for k in ["light", "dark"]:
-                            if k not in theme.modes:
-                                theme.modes[k] = Mode(
-                                    name=k,
-                                    wallpaper=theme.wallpaper,
-                                    palette=Palette(),
-                                )
-                        for mode in theme.modes.values():
-                            mode.palette = await exp_gen_palette(
-                                img=mode.wallpaper._path, light=("light" in mode.name)
-                            )
-                    save_res = await self.save_theme(
-                        theme=theme, album=album_name, old_name=theme_name
-                    )
-                    if save_res.value:
-                        res.success(
-                            f'theme "{theme_name}" in album "{album_name}" rewritten'
-                        )
-                    else:
-                        res += save_res
-                except Exception as e:
-                    res.exception(
-                        e,
-                        f'failed to rewrite theme "{theme_name}"',
-                    )
+        for theme_name, theme in self.themes.items():
+            try:
+                if name_includes and name_includes not in theme_name:
                     continue
+                if regen_colors:
+                    for k in ["light", "dark"]:
+                        if k not in theme.modes:
+                            theme.modes[k] = Mode(
+                                name=k,
+                                wallpaper=theme.wallpaper,
+                                palette=Palette(),
+                            )
+                    for mode in theme.modes.values():
+                        mode.palette = await exp_gen_palette(
+                            img=mode.wallpaper._path, light=("light" in mode.name)
+                        )
+                save_res = await self.save_theme(theme=theme, old_name=theme_name)
+                if save_res.value:
+                    res.success(f'theme "{theme_name}" rewritten')
+                else:
+                    res += save_res
+            except Exception as e:
+                res.exception(
+                    e,
+                    f'failed to rewrite theme "{theme_name}"',
+                )
+                continue
         return res
 
-    def delete_theme(self, theme_name: str, album: str | None = None) -> Result:
+    def delete_theme(self, theme_name: str) -> Result:
         res = Result()
 
-        if not album:
-            album = "default"
-        elif album not in self.albums:
-            return res.error(f'album "{album}" not found')
+        if theme_name not in self.themes:
+            return res.error(f'theme "{theme_name}" not found')
 
-        if theme_name not in self.albums[album]:
-            return res.error(f'theme "{theme_name}" not found in album "{album}"')
+        theme = self.themes[theme_name]
 
-        theme = self.albums[album][theme_name]
-
-        if theme.path.parent.parent != ALBUMS_DIR:
-            return res.error(f'"{theme.path}" not in "{ALBUMS_DIR}"')
+        if not str(theme.path).startswith(str(THEMES_DIR)) or theme.path == THEMES_DIR:
+            return res.error(f'"{theme.path}" not in "{THEMES_DIR}"')
 
         shutil.rmtree(theme.path)
 
         if theme_name == self.config.theme:
             self.config.theme = None
-        self.albums[album].pop(theme_name)
+        self.themes.pop(theme_name)
 
         return res.success(f'theme "{theme_name}" deleted')
 
@@ -301,7 +244,6 @@ class ThemeManager:
         mode_name: str | None = None,
         styles_names: str | None = None,
         palette_name: str | None = None,
-        album: str | None = None,
         use_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
         print_theme_dict: bool = False,
@@ -309,23 +251,17 @@ class ThemeManager:
         res = Result()
 
         try:
-            if not album:
-                album = "default"
-            elif album not in self.albums:
-                return res.error(f'album "{album}" not found')
-
             if not theme_name:
                 if not self.config.theme:
                     return res.error("No current theme")
                 theme_name = self.config.theme
-                album = self.config.album
-            elif theme_name not in self.albums[album]:
+            elif theme_name not in self.themes:
                 return res.error(f'"{theme_name}" not found')
 
             if not mode_name:
                 mode_name = self.config.mode
 
-            theme: Theme = deepcopy(self.albums[album][theme_name])
+            theme: Theme = deepcopy(self.themes[theme_name])
 
             if mode_name not in theme.modes:
                 new_mode = [*theme.modes.keys()][0]
@@ -372,7 +308,6 @@ class ThemeManager:
             res += modules_res
 
             self.config.theme = theme_name
-            self.config.album = album
             self.config.mode = mode_name
             self.save_config()
 
@@ -393,7 +328,6 @@ class ThemeManager:
         mode_name: str | None = None,
         styles_names: str | None = None,
         palette_name: str | None = None,
-        album: str | None = None,
         theme_name_includes: str | None = None,
         use_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
@@ -401,14 +335,9 @@ class ThemeManager:
     ) -> Result:
         res = Result()
 
-        if not album:
-            album = "default"
-        elif album not in self.albums:
-            return res.error(f'album "{album}" not found')
-
-        themes_list = [k for k in self.albums[album].keys()]
+        themes_list = [k for k in self.themes.keys()]
         if len(themes_list) < 1:
-            return res.error(f'no theme found in album "{album}"')
+            return res.error("no theme found")
 
         if theme_name_includes:
             themes_list = [t for t in themes_list if theme_name_includes in t]
@@ -424,7 +353,6 @@ class ThemeManager:
         theme = random.choice(themes_list)
         apply_res = await self.apply_theme(
             theme,
-            album=album,
             mode_name=mode_name,
             styles_names=styles_names,
             palette_name=palette_name,
@@ -443,13 +371,13 @@ class ThemeManager:
 
         mode_name = "light" if self.config.mode == "dark" else "dark"
 
-        return await self.apply_theme(mode_name=mode_name, album=self.config.album)
+        return await self.apply_theme(mode_name=mode_name)
 
     async def set_mode(self, mode_name: str) -> Result:
         if not self.config.theme:
             return Result().error("no theme set")
 
-        return await self.apply_theme(mode_name=mode_name, album=self.config.album)
+        return await self.apply_theme(mode_name=mode_name)
 
     async def list_themes(
         self,
@@ -457,10 +385,8 @@ class ThemeManager:
     ) -> Result:
         res = Result()
 
-        for album_name, themes in self.albums.items():
-            res.info(f"{album_name}:")
-            for theme_name in themes:
-                res.info(f"    {theme_name}")
+        for theme_name in self.themes:
+            res.info(theme_name)
 
         return res
 

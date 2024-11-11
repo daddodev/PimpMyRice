@@ -27,7 +27,6 @@ class Style:
 class ThemeConfig:
     theme: str | None = None
     mode: str = "dark"
-    album: str = "default"
 
 
 @dataclass
@@ -131,7 +130,7 @@ class Wallpaper:
 
 async def gen_from_img(
     image: Path,
-    album: dict[str, Theme],
+    themes: dict[str, Theme],
     name: str | None = None,
     backend: str = "pimp",
 ) -> Result[Theme]:
@@ -150,7 +149,7 @@ async def gen_from_img(
         "light": Mode("light", wallpaper=Wallpaper(image), palette=light_colors),
     }
 
-    theme_name = valid_theme_name(name or image.stem, album)
+    theme_name = valid_theme_name(name or image.stem, themes)
     theme = Theme(name=theme_name, path=Path(), wallpaper=Wallpaper(image), modes=modes)
 
     res.value = theme
@@ -239,7 +238,7 @@ def gen_theme_dict(
     return theme_dict
 
 
-def valid_theme_name(name: str, album: dict[str, Theme]) -> str:
+def valid_theme_name(name: str, themes: dict[str, Theme]) -> str:
     whitelist = "-_.() %s%s" % (string.ascii_letters, string.digits)
     char_limit = 20
     cleaned_filename = (
@@ -250,7 +249,7 @@ def valid_theme_name(name: str, album: dict[str, Theme]) -> str:
 
     tries = 1
     n = name
-    while n in album:
+    while n in themes:
         n = f"{name}_{tries+1}"
         tries += 1
     return n

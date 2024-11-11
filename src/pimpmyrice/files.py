@@ -7,9 +7,9 @@ from typing import Any
 import requests
 import yaml
 
-from .config import (ALBUMS_DIR, BASE_STYLE_FILE, CONFIG_FILE, LOG_FILE,
-                     MODULES_DIR, PALETTES_DIR, PIMP_CONFIG_DIR, STYLES_DIR,
-                     TEMP_DIR)
+from .config import (BASE_STYLE_FILE, CONFIG_FILE, LOG_FILE, MODULES_DIR,
+                     PALETTES_DIR, PIMP_CONFIG_DIR, STYLES_DIR, TEMP_DIR,
+                     THEMES_DIR)
 from .keywords import base_style
 from .logger import get_logger
 from .utils import Result
@@ -51,8 +51,7 @@ def import_image(image_path: Path, theme_dir: Path) -> Path:
 def check_config_dirs() -> None:
     for dir in [
         PIMP_CONFIG_DIR,
-        ALBUMS_DIR,
-        ALBUMS_DIR / "default",
+        THEMES_DIR,
         STYLES_DIR,
         PALETTES_DIR,
         MODULES_DIR,

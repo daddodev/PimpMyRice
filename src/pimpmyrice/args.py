@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 from .colors import palette_display_string
-from .config import (ALBUMS_DIR, BASE_STYLE_FILE, MODULES_DIR, PALETTES_DIR,
-                     STYLES_DIR)
+from .config import (BASE_STYLE_FILE, MODULES_DIR, PALETTES_DIR, STYLES_DIR,
+                     THEMES_DIR)
 from .logger import get_logger
 from .theme import ThemeManager
 from .utils import Result
@@ -19,19 +19,17 @@ async def process_edit_args(args: dict[str, Any]) -> None:
     if not args["edit"]:
         return
 
-    album = args["--album"] or "default"
-
     if args["keywords"]:
         open_editor(BASE_STYLE_FILE)
     elif args["theme"]:
         theme = args["THEME"]
 
-        theme_path = ALBUMS_DIR / album / theme / "theme.json"
-        if not theme_path.is_file():
-            log.error(f'theme "{theme}" not found in album "{album}"')
+        theme_json_path = THEMES_DIR / theme / "theme.json"
+        if not theme_json_path.is_file():
+            log.error(f'theme "{theme}" not found')
             return
 
-        open_editor(theme_path)
+        open_editor(theme_json_path)
 
     elif args["style"]:
         style = args["STYLE"]
@@ -68,7 +66,6 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
     res = Result()
 
     options = {
-        "album": args["--album"],
         "mode_name": args["--mode"],
         "styles_names": args["--style"],
         "palette_name": args["--palette"],
@@ -96,11 +93,10 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
             return await tm.rename_theme(
                 theme_name=args["THEME"],
                 new_name=args["NEW_NAME"],
-                album=args["--album"],
             )
 
         elif args["delete"]:
-            return tm.delete_theme(args["THEME"], args["--album"])
+            return tm.delete_theme(args["THEME"])
 
     elif args["module"]:
         module_name = args["MODULE"]
@@ -124,7 +120,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         return await tm.set_mode(mode)
 
     elif args["gen"]:
-        a = {"album": options["album"]}
+        a = {}
         if args["--name"]:
             a["name"] = args["--name"]
 
@@ -155,27 +151,15 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         msg = f"""🍙 PimpMyRice 0.0.1
 
 name: {tm.config.theme}
-album: {tm.config.album}
 mode: {tm.config.mode}
 """
-
-        # if tm.config.theme:
-        #     msg += "\r\n" + palette_display_string(
-        #         tm.albums[tm.config.album][tm.config.theme]
-        #         .modes[tm.config.mode]
-        #         .palette.term
-        #     )
 
         return res.info(msg)
 
     elif args["regen"]:
-        return await tm.rewrite_themes(
-            regen_colors=True, album=options["album"], name_includes=args["--name"]
-        )
+        return await tm.rewrite_themes(regen_colors=True, name_includes=args["--name"])
 
     elif args["rewrite"]:
-        return await tm.rewrite_themes(
-            album=options["album"], name_includes=args["--name"]
-        )
+        return await tm.rewrite_themes(name_includes=args["--name"])
 
     return res.error("not implemented")

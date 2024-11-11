@@ -1,10 +1,10 @@
 base_style = {
-    "bar": {"bg": "$panel.bg", "fg": "$panel.fg", "split": False},
+    "bar": {"bg": "$panel.bg", "fg": "$panel.fg"},
     "blur": {"enabled": True, "passes": 3, "strength": 7},
     "border": {"radius": 15, "width": 3},
     "font": {
-        "mono": "Bitstream Vera Sans Mono",
-        "normal": "Bitstream Vera Sans",
+        "mono": "monospace",
+        "normal": "sans-serif",
         "size": 10,
     },
     "gaps": {"inner": 10, "outer": 10},
@@ -13,7 +13,7 @@ base_style = {
     "shadow": {"enabled": True, "offset": 15, "opacity": 0.55, "radius": 0},
     "titlebar": {
         "active": {"bg": "$border.active", "fg": "$primary.fg"},
-        "inactive": {"bg": "$border.inactive", "fg": "$primary.fg"},
+        "inactive": {"bg": "$border.inactive", "fg": "$normal.fg"},
     },
     "animations": {"enabled": True},
 }
