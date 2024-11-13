@@ -25,6 +25,7 @@ class ThemeManager:
         self.base_style = self.get_base_style()
         self.styles = self.get_styles()
         self.palettes = self.get_palettes()
+        self.tags: set[str] = set()
         self.themes = self.get_themes()
         self.config = self.get_config()
         self.event_handler = EventHandler()
@@ -66,11 +67,17 @@ class ThemeManager:
     def get_themes(self) -> dict[str, Theme]:
         timer = Timer()
 
-        themes = {
-            folder.name: parse_theme(folder, self.styles, self.palettes)
-            for folder in THEMES_DIR.iterdir()
-            if (folder / "theme.json").exists()
-        }
+        themes: dict[str, Theme] = {}
+
+        for directory in THEMES_DIR.iterdir():
+            if not (directory / "theme.json").is_file():
+                continue
+
+            theme = parse_theme(directory, self.styles, self.palettes)
+            themes[directory.name] = theme
+
+            for tag in theme.tags:
+                self.tags.add(tag)
 
         log.debug(f"{len(themes)} themes loaded in {timer.elapsed():.4f} sec")
 
@@ -186,37 +193,42 @@ class ThemeManager:
         self,
         regen_colors: bool = False,
         name_includes: str | None = None,
+        include_tags: list[str] | None = None,
+        exclude_tags: list[str] | None = None,
     ) -> Result:
-        # TODO refactor
         res = Result()
 
-        for theme_name, theme in self.themes.items():
-            try:
-                if name_includes and name_includes not in theme_name:
-                    continue
-                if regen_colors:
-                    for k in ["light", "dark"]:
-                        if k not in theme.modes:
-                            theme.modes[k] = Mode(
-                                name=k,
-                                wallpaper=theme.wallpaper,
-                                palette=Palette(),
-                            )
-                    for mode in theme.modes.values():
-                        mode.palette = await exp_gen_palette(
-                            img=mode.wallpaper._path, light=("light" in mode.name)
-                        )
-                save_res = await self.save_theme(theme=theme, old_name=theme_name)
-                if save_res.value:
-                    res.success(f'theme "{theme_name}" rewritten')
-                else:
-                    res += save_res
-            except Exception as e:
-                res.exception(
-                    e,
-                    f'failed to rewrite theme "{theme_name}"',
-                )
+        for theme in self.themes.values():
+            if theme.name == self.config.theme:
                 continue
+
+            if name_includes and name_includes not in theme.name:
+                continue
+
+            if include_tags and not any(tag in include_tags for tag in theme.tags):
+                continue
+
+            if exclude_tags and any(tag in exclude_tags for tag in theme.tags):
+                continue
+
+            if regen_colors:
+                for k in ["light", "dark"]:
+                    if k not in theme.modes:
+                        theme.modes[k] = Mode(
+                            name=k,
+                            wallpaper=theme.wallpaper,
+                            palette=Palette(),
+                        )
+                for mode in theme.modes.values():
+                    mode.palette = await exp_gen_palette(
+                        img=mode.wallpaper._path, light=("light" in mode.name)
+                    )
+            save_res = await self.save_theme(theme=theme, old_name=theme.name)
+            if save_res.value:
+                res.success(f'theme "{theme.name}" rewritten')
+            else:
+                res += save_res
+
         return res
 
     def delete_theme(self, theme_name: str) -> Result:
@@ -250,109 +262,113 @@ class ThemeManager:
     ) -> Result:
         res = Result()
 
-        try:
-            if not theme_name:
-                if not self.config.theme:
-                    return res.error("No current theme")
-                theme_name = self.config.theme
-            elif theme_name not in self.themes:
-                return res.error(f'"{theme_name}" not found')
+        if not theme_name:
+            if not self.config.theme:
+                return res.error("No current theme")
+            theme_name = self.config.theme
+        elif theme_name not in self.themes:
+            return res.error(f'"{theme_name}" not found')
 
-            if not mode_name:
-                mode_name = self.config.mode
+        if not mode_name:
+            mode_name = self.config.mode
 
-            theme: Theme = deepcopy(self.themes[theme_name])
+        theme: Theme = deepcopy(self.themes[theme_name])
 
-            if mode_name not in theme.modes:
-                new_mode = [*theme.modes.keys()][0]
-                res.warning(
-                    f'"{mode_name}" mode not present in theme, applying "{new_mode}"'
-                )
-                mode_name = new_mode
-
-            styles = []
-            if theme.style:
-                styles.append(theme.style)
-            if mode_style := theme.modes[mode_name].style:
-                styles.append(mode_style)
-            if styles_names:
-                for style in styles_names.split(","):
-                    if style not in self.styles:
-                        return res.error(f'style "{style}" not found')
-                    styles.append(self.styles[style])
-
-            if palette_name:
-                if palette_name in self.palettes:
-                    palette = self.palettes[palette_name]
-                else:
-                    return res.error(f'palette "{palette_name}" not found')
-            else:
-                palette = theme.modes[mode_name].palette
-
-            theme_dict = tutils.gen_theme_dict(
-                theme=theme,
-                base_style=self.base_style,
-                mode_name=mode_name,
-                styles=styles,
-                palette=palette,
+        if mode_name not in theme.modes:
+            new_mode = [*theme.modes.keys()][0]
+            res.warning(
+                f'"{mode_name}" mode not present in theme, applying "{new_mode}"'
             )
+            mode_name = new_mode
 
-            if print_theme_dict:
-                pretty = rich.pretty.pretty_repr(theme_dict)
-                res.info("generated theme_dict:\r\n" + pretty)
+        styles = []
+        if theme.style:
+            styles.append(theme.style)
+        if mode_style := theme.modes[mode_name].style:
+            styles.append(mode_style)
+        if styles_names:
+            for style in styles_names.split(","):
+                if style not in self.styles:
+                    return res.error(f'style "{style}" not found')
+                styles.append(self.styles[style])
 
-            res.info(f'applying theme "{theme.name}"...')
-
-            modules_res = await self.mm.run(theme_dict, use_modules, exclude_modules)
-
-            res += modules_res
-
-            self.config.theme = theme_name
-            self.config.mode = mode_name
-            self.save_config()
-
-            # display_color_palette(palette.term)
-            if res.errors:
-                res.warning(f'theme "{theme_name}" {mode_name} applied with errors')
+        if palette_name:
+            if palette_name in self.palettes:
+                palette = self.palettes[palette_name]
             else:
-                res.success(f'theme "{theme_name}" {mode_name} applied')
+                return res.error(f'palette "{palette_name}" not found')
+        else:
+            palette = theme.modes[mode_name].palette
 
-            await self.event_handler.publish("theme_applied")
-        except Exception as e:
-            res.exception(e, f'error applying theme "{theme_name}"')
-        finally:
-            return res
+        theme_dict = tutils.gen_theme_dict(
+            theme=theme,
+            base_style=self.base_style,
+            mode_name=mode_name,
+            styles=styles,
+            palette=palette,
+        )
+
+        if print_theme_dict:
+            pretty = rich.pretty.pretty_repr(theme_dict)
+            res.info("generated theme_dict:\r\n" + pretty)
+
+        res.info(f'applying theme "{theme.name}"...')
+
+        modules_res = await self.mm.run(theme_dict, use_modules, exclude_modules)
+
+        res += modules_res
+
+        self.config.theme = theme_name
+        self.config.mode = mode_name
+        self.save_config()
+
+        # display_color_palette(palette.term)
+        if res.errors:
+            res.warning(f'theme "{theme_name}" {mode_name} applied with errors')
+        else:
+            res.success(f'theme "{theme_name}" {mode_name} applied')
+
+        await self.event_handler.publish("theme_applied")
+
+        return res
 
     async def set_random_theme(
         self,
         mode_name: str | None = None,
         styles_names: str | None = None,
         palette_name: str | None = None,
-        theme_name_includes: str | None = None,
+        name_includes: str | None = None,
         use_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
+        include_tags: list[str] | None = None,
+        exclude_tags: list[str] | None = None,
         print_theme_dict: bool = False,
     ) -> Result:
         res = Result()
 
-        themes_list = [k for k in self.themes.keys()]
+        themes_list: list[Theme] = []
+
+        for theme in self.themes.values():
+            if theme.name == self.config.theme:
+                continue
+
+            if name_includes and name_includes not in theme.name:
+                continue
+
+            if include_tags and not any(tag in include_tags for tag in theme.tags):
+                continue
+
+            if exclude_tags and any(tag in exclude_tags for tag in theme.tags):
+                continue
+
+            themes_list.append(theme)
+
         if len(themes_list) < 1:
             return res.error("no theme found")
 
-        if theme_name_includes:
-            themes_list = [t for t in themes_list if theme_name_includes in t]
-            if len(themes_list) < 1:
-                return res.error(
-                    f'no theme found with name including "{theme_name_includes}"'
-                )
-
-        current = self.config.theme
-        if current in themes_list and len(themes_list) > 1:
-            themes_list.remove(current)
-
-        theme = random.choice(themes_list)
+        theme_name = random.choice(themes_list).name
         apply_res = await self.apply_theme(
-            theme,
+            theme_name,
             mode_name=mode_name,
             styles_names=styles_names,
             palette_name=palette_name,
@@ -379,20 +395,23 @@ class ThemeManager:
 
         return await self.apply_theme(mode_name=mode_name)
 
-    async def list_themes(
-        self,
-        # album: str | None = None,
-    ) -> Result:
+    async def list_themes(self) -> Result:
         res = Result()
 
-        for theme_name in self.themes:
-            res.info(theme_name)
+        res.info("\nNAME\t\t\tTAGS\n")
+        for theme in self.themes.values():
+            res.info(f"{theme.name:10}\t\t{', '.join(theme.tags)}")
 
         return res
 
-    async def list_palettes(
-        self,
-    ) -> Result:
+    async def list_tags(self) -> Result:
+        res = Result()
+
+        res.info("\n".join(self.tags))
+
+        return res
+
+    async def list_palettes(self) -> Result:
         res = Result()
 
         for palette in self.palettes:
@@ -400,9 +419,7 @@ class ThemeManager:
 
         return res
 
-    async def list_styles(
-        self,
-    ) -> Result:
+    async def list_styles(self) -> Result:
         res = Result()
 
         for style in self.styles:

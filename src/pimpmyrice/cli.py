@@ -11,7 +11,7 @@ Usage:
     pimp toggle mode [options]
     pimp (clone|delete) module MODULE [options]
     pimp run module MODULE COMMAND [COMMAND_ARGS...] [options]
-    pimp list (themes|styles|palettes|keywords|modules) [options]
+    pimp list (themes|tags|styles|palettes|keywords|modules) [options]
     pimp edit theme THEME [options]
     pimp edit style STYLE [options]
     pimp edit palette PALETTE [options]
@@ -22,7 +22,8 @@ Usage:
     pimp info [options]
 
 Options:
-    --tags -a TAGS
+    --include-tags TAGS
+    --exclude-tags TAGS
     --mode -m MODE
     --name -n NAME
     --palette -p PALETTE

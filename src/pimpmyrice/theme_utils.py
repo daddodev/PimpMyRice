@@ -44,6 +44,7 @@ class Theme:
     wallpaper: Wallpaper
     modes: dict[str, Mode] = field(default_factory=dict)
     style: Style | None = None
+    tags: list[str] = field(default_factory=list)
 
     def __repr__(self) -> str:
         return f"Theme(name: {self.name})"
@@ -83,7 +84,6 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
                         new_dic[k] = v.name
                     else:
                         new_dic[k] = v.keywords
-
                 case _:
                     new_dic[k] = v
         return new_dic

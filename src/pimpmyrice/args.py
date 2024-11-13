@@ -79,7 +79,11 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     if args["random"]:
         if name_includes := args["--name"]:
-            options["theme_name_includes"] = name_includes
+            options["name_includes"] = name_includes
+        if args["--include-tags"]:
+            options["include_tags"] = args["--include-tags"].split(",")
+        if args["--exclude-tags"]:
+            options["exclude_tags"] = args["--exclude-tags"].split(",")
         return await tm.set_random_theme(**options)
 
     elif args["refresh"]:
@@ -141,6 +145,8 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
             return await tm.mm.list()
         elif args["themes"]:
             return await tm.list_themes()
+        elif args["tags"]:
+            return await tm.list_tags()
         elif args["palettes"]:
             return await tm.list_palettes()
         elif args["styles"]:
