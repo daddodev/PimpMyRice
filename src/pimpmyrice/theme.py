@@ -94,7 +94,6 @@ class ThemeManager:
         image: str,
         name: str | None = None,
         tags: list[str] | None = None,
-        backend: str = "pimp",
         apply: bool = False,
     ) -> Result:
         res = Result()
@@ -108,9 +107,7 @@ class ThemeManager:
         else:
             file = Path(image)
 
-        gen_res = await tutils.gen_from_img(
-            image=file, name=name, themes=self.themes, backend=backend
-        )
+        gen_res = await tutils.gen_from_img(image=file, name=name, themes=self.themes)
         res += gen_res
         if not gen_res.value:
             return res.error("could not generate theme")
@@ -262,7 +259,7 @@ class ThemeManager:
         mode_name: str | None = None,
         styles_names: str | None = None,
         palette_name: str | None = None,
-        use_modules: list[str] | None = None,
+        include_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
         print_theme_dict: bool = False,
     ) -> Result:
@@ -320,7 +317,7 @@ class ThemeManager:
 
         res.info(f'applying theme "{theme.name}"...')
 
-        modules_res = await self.mm.run(theme_dict, use_modules, exclude_modules)
+        modules_res = await self.mm.run(theme_dict, include_modules, exclude_modules)
 
         res += modules_res
 
@@ -344,7 +341,7 @@ class ThemeManager:
         styles_names: str | None = None,
         palette_name: str | None = None,
         name_includes: str | None = None,
-        use_modules: list[str] | None = None,
+        include_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
         include_tags: list[str] | None = None,
         exclude_tags: list[str] | None = None,
@@ -378,7 +375,7 @@ class ThemeManager:
             mode_name=mode_name,
             styles_names=styles_names,
             palette_name=palette_name,
-            use_modules=use_modules,
+            include_modules=include_modules,
             exclude_modules=exclude_modules,
             print_theme_dict=print_theme_dict,
         )

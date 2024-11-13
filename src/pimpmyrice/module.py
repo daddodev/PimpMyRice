@@ -57,13 +57,13 @@ class ModuleManager:
     async def run(
         self,
         theme_dict: AttrDict,
-        use_modules: list[str] | None = None,
+        include_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
     ) -> Result:
         res = Result()
         timer = Timer()
 
-        for m in [*(use_modules or []), *(exclude_modules or [])]:
+        for m in [*(include_modules or []), *(exclude_modules or [])]:
             if m not in self.modules:
                 return res.error(f'module "{m}" not found')
 
@@ -73,10 +73,10 @@ class ModuleManager:
         with Lock(LOCK_FILE):
             runners = []
             modifiers = []
-            if use_modules:
+            if include_modules:
                 modules = {
                     name: self.modules[name]
-                    for name in use_modules
+                    for name in include_modules
                     if name in self.modules
                 }
             elif exclude_modules:

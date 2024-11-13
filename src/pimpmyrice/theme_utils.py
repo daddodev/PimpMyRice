@@ -133,15 +133,11 @@ async def gen_from_img(
     image: Path,
     themes: dict[str, Theme],
     name: str | None = None,
-    backend: str = "pimp",
 ) -> Result[Theme]:
     res: Result[Theme] = Result()
 
     if not image.is_file():
         return res.error(f'image not found at "{image}"')
-
-    if backend != "pimp":
-        return res.error("not yet implemented")
 
     dark_colors = await clr.exp_gen_palette(image)
     light_colors = await clr.exp_gen_palette(image, light=True)

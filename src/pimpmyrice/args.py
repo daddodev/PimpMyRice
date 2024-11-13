@@ -72,9 +72,9 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         "print_theme_dict": args["--print-theme-dict"],
     }
 
-    if modules := args["--use_modules"]:
-        options["use_modules"] = modules.split(",")
-    elif modules := args["--exclude_modules"]:
+    if modules := args["--include-modules"]:
+        options["include_modules"] = modules.split(",")
+    elif modules := args["--exclude-modules"]:
         options["exclude_modules"] = modules.split(",")
 
     if args["random"]:
@@ -127,9 +127,6 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         a = {}
         if args["--name"]:
             a["name"] = args["--name"]
-
-        if b := args["--backend"]:
-            a["backend"] = b
 
         if apply := args["--apply"]:
             a["apply"] = apply

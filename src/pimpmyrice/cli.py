@@ -28,10 +28,9 @@ Options:
     --name -n NAME
     --palette -p PALETTE
     --style -s STYLE
-    --use_modules -u MODULES
-    --exclude_modules -e MODULES
-    --print-theme-dict -d
-    --backend -b BACKEND
+    --include-modules MODULES
+    --exclude-modules MODULES
+    --print-theme-dict
     --verbose -v
 """
 
