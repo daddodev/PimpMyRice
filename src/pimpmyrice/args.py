@@ -80,10 +80,10 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
     if args["random"]:
         if name_includes := args["--name"]:
             options["name_includes"] = name_includes
-        if args["--include-tags"]:
-            options["include_tags"] = args["--include-tags"].split(",")
-        if args["--exclude-tags"]:
-            options["exclude_tags"] = args["--exclude-tags"].split(",")
+        if tags := args["--tags"]:
+            options["include_tags"] = tags.split(",")
+        if tags := args["--exclude-tags"]:
+            options["exclude_tags"] = tags.split(",")
         return await tm.set_random_theme(**options)
 
     elif args["refresh"]:

@@ -22,7 +22,7 @@ Usage:
     pimp info [options]
 
 Options:
-    --include-tags TAGS
+    --tags -t TAGS
     --exclude-tags TAGS
     --mode -m MODE
     --name -n NAME
