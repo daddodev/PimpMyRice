@@ -112,6 +112,9 @@ class ThemeManager:
         if not gen_res.value:
             return res.error("could not generate theme")
 
+        if tags:
+            gen_res.value.tags = tags
+
         # TODO generate name here
         save_res = await self.save_theme(gen_res.value)
         res += save_res

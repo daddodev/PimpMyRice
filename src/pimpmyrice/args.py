@@ -125,6 +125,10 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     elif args["gen"]:
         a = {}
+
+        if tags := args["--tags"]:
+            a["tags"] = tags.split(",")
+
         if args["--name"]:
             a["name"] = args["--name"]
 
