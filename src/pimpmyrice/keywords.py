@@ -17,4 +17,5 @@ base_style = {
         "inactive": {"bg": "$border.inactive", "fg": "$normal.fg"},
     },
     "animations": {"enabled": True},
+    "modules_styles": {},
 }
