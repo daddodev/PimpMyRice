@@ -12,6 +12,7 @@ base_style = {
     "padding": {"h": 10, "v": 10},
     "shadow": {"enabled": True, "offset": 15, "opacity": 0.55, "radius": 0},
     "titlebar": {
+        "enabled": True,
         "active": {"bg": "$border.active", "fg": "$primary.fg"},
         "inactive": {"bg": "$border.inactive", "fg": "$normal.fg"},
     },
