@@ -100,6 +100,7 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
             dump["wallpaper_thumb"] = thumb
         except Exception as e:
             log.exception(e)
+            log.error(f'failed generating thumbnail for theme "{theme.name}"')
             dump["wallpaper_thumb"] = ""
 
     return dump

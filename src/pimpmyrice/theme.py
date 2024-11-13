@@ -73,7 +73,13 @@ class ThemeManager:
             if not (directory / "theme.json").is_file():
                 continue
 
-            theme = parse_theme(directory, self.styles, self.palettes)
+            try:
+                theme = parse_theme(directory, self.styles, self.palettes)
+            except Exception as e:
+                log.exception(e)
+                log.error(f'Error parsing theme "{directory.name}": {str(e)}')
+                continue
+
             themes[directory.name] = theme
 
             for tag in theme.tags:

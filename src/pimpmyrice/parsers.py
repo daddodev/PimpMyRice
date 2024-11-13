@@ -40,46 +40,40 @@ def parse_theme(
 ) -> Theme:
     name = path.name
 
-    try:
-        data = files.load_json(path / "theme.json")
-        data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
-        for mode_name, mode in data["modes"].items():
-            if "wallpaper" in mode:
-                mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
+    data = files.load_json(path / "theme.json")
+    data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
+    for mode_name, mode in data["modes"].items():
+        if "wallpaper" in mode:
+            mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
+        else:
+            mode["wallpaper"] = data["wallpaper"]
+
+        if "style" in mode:
+            # TODO multiple styles
+            if isinstance(mode["style"], str):
+                mode["style"] = global_styles[mode["style"]]
+            elif isinstance(mode["style"], dict):
+                mode["style"] = Style("", Path(), keywords=mode["style"])
             else:
-                mode["wallpaper"] = data["wallpaper"]
+                log.error('"style" must be a string or a dict')
+        if isinstance(mode["palette"], str):
+            mode["palette"] = global_palettes[mode["palette"]]
+        else:
+            mode["palette"] = Palette(**ensure_color(mode["palette"]))
 
-            if "style" in mode:
-                # TODO multiple styles
-                if isinstance(mode["style"], str):
-                    mode["style"] = global_styles[mode["style"]]
-                elif isinstance(mode["style"], dict):
-                    mode["style"] = Style("", Path(), keywords=mode["style"])
-                else:
-                    log.error('"style" must be a string or a dict')
-            if isinstance(mode["palette"], str):
-                mode["palette"] = global_palettes[mode["palette"]]
-            else:
-                mode["palette"] = Palette(**ensure_color(mode["palette"]))
+        data["modes"][mode_name] = Mode(name=mode_name, **mode)
 
-            data["modes"][mode_name] = Mode(name=mode_name, **mode)
+    if "style" in data:
+        if isinstance(data["style"], str):
+            data["style"] = global_styles[data["style"]]
+        elif isinstance(data["style"], dict):
+            data["style"] = Style("", Path(), keywords=data["style"])
 
-        if "style" in data:
-            if isinstance(data["style"], str):
-                data["style"] = global_styles[data["style"]]
-            elif isinstance(data["style"], dict):
-                data["style"] = Style("", Path(), keywords=data["style"])
+    data["path"] = path
 
-        data["path"] = path
+    theme = Theme(name=name, **data)
 
-        theme = Theme(name=name, **data)
-
-        return theme
-
-    except Exception as e:
-        log.exception(e)
-        log.error(f'Error parsing theme "{name}": {str(e)}')
-        return Theme(path=Path(), name=name, wallpaper=Wallpaper(_path=Path()))
+    return theme
 
 
 def parse_module(yaml_path: Path) -> Module:
