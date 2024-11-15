@@ -10,7 +10,7 @@ import yaml
 from .config import (BASE_STYLE_FILE, CONFIG_FILE, LOG_FILE, MODULES_DIR,
                      PALETTES_DIR, PIMP_CONFIG_DIR, STYLES_DIR, TEMP_DIR,
                      THEMES_DIR)
-from .keywords import base_style
+from .keywords import default_base_style
 from .logger import get_logger
 from .utils import Result
 
@@ -60,7 +60,7 @@ def check_config_dirs() -> None:
         dir.mkdir(exist_ok=True)
 
     if not BASE_STYLE_FILE.exists():
-        save_json(BASE_STYLE_FILE, base_style)
+        save_json(BASE_STYLE_FILE, default_base_style)
     if not CONFIG_FILE.exists():
         config = {"theme": None, "mode": "dark"}
         save_json(CONFIG_FILE, config)
