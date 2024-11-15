@@ -163,7 +163,7 @@ def parse_module(yaml_path: Path) -> Module:
                         match content:
                             case str(content):
                                 target = content
-                                template_name = f"{Path(target).name}.base"
+                                template_name = f"{Path(target).name}.j2"
                             case dict(content):
                                 template_name, target = next(iter(content.items()))
                             case _:
@@ -173,7 +173,7 @@ def parse_module(yaml_path: Path) -> Module:
                         run.append(
                             FileAction(
                                 template=str(
-                                    MODULES_DIR / name / "files" / template_name
+                                    MODULES_DIR / name / "templates" / template_name
                                 ),
                                 target=target,
                             )
