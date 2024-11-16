@@ -41,12 +41,12 @@ It applies themes through modules, each module being responsible for styling a s
 #### [Pipx](https://pipx.pypa.io/stable/installation/)
 
 ```bash
-pipx install git+https://github.com/daddodev/pimpmyrice.git
+pipx install pimpmyrice
 ```
 
 ### Add some modules
 
-Create your own modules from scratch or clone from the [official modules](https://github.com/orgs/PimpMyRice-modules/repositories).
+[Create your own modules](https://pimpmyrice.vercel.app/docs/module#create-a-module) from scratch or clone from the [official modules](https://github.com/orgs/pimpmyrice-modules/repositories) to get started.
 
 For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacritty) module:
 

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf8") as f:
 
 setuptools.setup(
     name="pimpmyrice",
-    version="0.0.1",
+    version="0.1.0",
     author="daddodev",
     author_email="daddodev@gmail.com",
     description="Creating and swapping rices made easy",
