@@ -1,4 +1,5 @@
 import os
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -155,8 +156,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     elif args["info"]:
         # TODO use Rich Table?
-        msg = f"""🍙 PimpMyRice 0.0.1
-
+        msg = f"""🍙 PimpMyRice {version("pimpmyrice")}
 name: {tm.config.theme}
 mode: {tm.config.mode}
 """
@@ -169,4 +169,5 @@ mode: {tm.config.mode}
     elif args["rewrite"]:
         return await tm.rewrite_themes(name_includes=args["--name"])
 
+    return res.error("not implemented")
     return res.error("not implemented")
