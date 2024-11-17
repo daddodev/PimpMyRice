@@ -4,10 +4,12 @@ from pathlib import Path
 from typing import Any
 
 from .colors import palette_display_string
-from .config import (BASE_STYLE_FILE, MODULES_DIR, PALETTES_DIR, STYLES_DIR,
-                     THEMES_DIR)
+from .config import (BASE_STYLE_FILE, CONFIG_FILE, MODULES_DIR, PALETTES_DIR,
+                     STYLES_DIR, THEMES_DIR)
+from .files import load_json
 from .logger import get_logger
 from .theme import ThemeManager
+from .theme_utils import ThemeConfig
 from .utils import Result
 
 log = get_logger(__name__)
@@ -24,6 +26,10 @@ async def process_edit_args(args: dict[str, Any]) -> None:
         open_editor(BASE_STYLE_FILE)
     elif args["theme"]:
         theme = args["THEME"]
+
+        if not theme:
+            config = load_json(CONFIG_FILE)
+            theme = ThemeConfig(**config).theme
 
         theme_json_path = THEMES_DIR / theme / "theme.json"
         if not theme_json_path.is_file():

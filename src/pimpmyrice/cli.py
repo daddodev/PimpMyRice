@@ -12,7 +12,7 @@ Usage:
     pimp (clone|delete) module MODULE [options]
     pimp run module MODULE COMMAND [COMMAND_ARGS...] [options]
     pimp list (themes|tags|styles|palettes|keywords|modules) [options]
-    pimp edit theme THEME [options]
+    pimp edit theme [THEME] [options]
     pimp edit style STYLE [options]
     pimp edit palette PALETTE [options]
     pimp edit keywords [options]
