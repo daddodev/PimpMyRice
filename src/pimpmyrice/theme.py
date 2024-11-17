@@ -6,6 +6,7 @@ from typing import Any
 
 import rich
 
+from . import parsers
 from . import theme_utils as tutils
 from .colors import Palette, exp_gen_palette, get_palettes
 from .config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
@@ -13,7 +14,6 @@ from .events import EventHandler
 from .files import download_file, load_json, save_json
 from .logger import get_logger
 from .module import ModuleManager
-from .parsers import parse_theme
 from .theme_utils import Mode, Style, Theme, ThemeConfig
 from .utils import Result, Timer
 
@@ -64,6 +64,11 @@ class ThemeManager:
     def get_palettes() -> dict[str, Palette]:
         return get_palettes()
 
+    def parse_theme(self, theme_path: Path) -> Theme:
+        theme = parsers.parse_theme(theme_path, self.styles, self.palettes)
+
+        return theme
+
     def get_themes(self) -> dict[str, Theme]:
         timer = Timer()
 
@@ -74,7 +79,7 @@ class ThemeManager:
                 continue
 
             try:
-                theme = parse_theme(directory, self.styles, self.palettes)
+                theme = self.parse_theme(directory)
             except Exception as e:
                 log.exception(e)
                 log.error(f'Error parsing theme "{directory.name}": {str(e)}')
