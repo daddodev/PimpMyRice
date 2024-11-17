@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import shutil
 from copy import deepcopy
 from pathlib import Path
@@ -176,6 +177,18 @@ class ModuleManager:
                             res.exception(
                                 e, f'could not copy "{target}" to "{target}.bkp"'
                             )
+
+                    link_path = Path(str(target) + ".j2")
+                    if link_path.exists():
+                        res.info(
+                            f'skipping linking "{link_path}" to "{action.template}", destination already exists'
+                        )
+                        continue
+                    else:
+                        link_path.parent.mkdir(exist_ok=True)
+
+                    os.symlink(action.template, link_path)
+                    res.info(f'linked "{link_path}" to "{action.template}"')
 
             if module.init:
                 init_res = await mutils.run_module_init(module)

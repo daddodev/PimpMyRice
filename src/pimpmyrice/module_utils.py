@@ -174,27 +174,26 @@ async def run_module(module: Module, theme_dict: AttrDict) -> ModuleResult:
 async def run_module_init(module: Module) -> ModuleResult:
     result = ModuleResult(name=module.name)
 
-    try:
-        for action in module.init:
-            match action:
-                case LinkAction():
-                    if action.destination.exists():
-                        return result.error(
-                            f'cannot link "{action.destination}" to\
-                                    "{action.origin}", destination already exists'
-                        )
+    for init_action in module.init:
+        match init_action:
+            case LinkAction():
+                if init_action.destination.exists():
+                    return result.error(
+                        f'cannot link "{init_action.destination}" to "{init_action.origin}", destination already exists'
+                    )
 
-                    action.destination.parent.mkdir(parents=True, exist_ok=True)
-                    os.symlink(
-                        action.origin, action.destination, target_is_directory=True
-                    )
-                    # action.destination.hardlink_to(action.origin)
-                    result.debug(
-                        f'init: "{action.destination}" linked to "{action.origin}"'
-                    )
-        return result
-    except Exception as e:
-        return result.exception(e, module.name)
+                init_action.destination.parent.mkdir(parents=True, exist_ok=True)
+                os.symlink(
+                    init_action.origin,
+                    init_action.destination,
+                    target_is_directory=True,
+                )
+                # action.destination.hardlink_to(action.origin)
+                result.debug(
+                    f'init: "{init_action.destination}" linked to "{init_action.origin}"'
+                )
+
+    return result
 
 
 def gen_file(
