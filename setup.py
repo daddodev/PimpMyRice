@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.1.0",
     author="daddodev",
     author_email="daddodev@gmail.com",
-    description="Creating and swapping rices made easy",
+    description="The overkill theme manager",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/daddodev/pimpmyrice",

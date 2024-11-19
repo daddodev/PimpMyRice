@@ -1,6 +1,6 @@
 # 🍙 PimpMyRice
 
-Creating and swapping rices made easy.
+### The overkill theme manager
 
 _This project is currently in alpha and may be subject to breaking changes._
 
