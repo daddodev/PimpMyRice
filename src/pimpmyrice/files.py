@@ -24,7 +24,11 @@ def load_yaml(file: Path) -> dict[str, Any]:
 
 def load_json(file: Path) -> dict[str, Any]:
     with open(file) as f:
-        return json.load(f)  # type: ignore
+
+        data = json.load(f)
+        data.pop("$schema", None)
+
+        return data  # type: ignore
 
 
 def save_json(file: Path, data: dict[str, Any]) -> None:
