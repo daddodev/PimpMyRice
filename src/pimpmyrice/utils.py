@@ -182,6 +182,7 @@ def parse_string_vars(
     d = {"home_dir": HOME_DIR, "config_dir": CONFIG_DIR}
     if module_name:
         d["templates_dir"] = MODULES_DIR / module_name / "templates"
+        d["files_dir"] = MODULES_DIR / module_name / "files"
     if not theme_dict:
         theme_dict = d
     else:
