@@ -183,11 +183,7 @@ class ThemeManager:
         dump = tutils.dump_theme(theme)
         save_json(theme_dir / "theme.json", dump)
 
-        parsed_theme = parse_theme(
-            path=THEMES_DIR / theme.name,
-            global_styles=self.styles,
-            global_palettes=self.palettes,
-        )
+        parsed_theme = self.parse_theme(THEMES_DIR / theme.name)
 
         self.themes[theme.name] = parsed_theme
 
@@ -210,9 +206,6 @@ class ThemeManager:
         res = Result()
 
         for theme in self.themes.values():
-            if theme.name == self.config.theme:
-                continue
-
             if name_includes and name_includes not in theme.name:
                 continue
 
