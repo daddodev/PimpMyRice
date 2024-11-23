@@ -18,19 +18,11 @@ def parse_wallpaper(
 ) -> Wallpaper:
     match wallpaper:
         case str(wallpaper):
-            file = wallpaper
-            mode = WallpaperMode.FILL
+            return Wallpaper(path=theme_path / wallpaper)
         case dict(wallpaper):
-            file = wallpaper["path"]
-            mode = WallpaperMode[wallpaper["mode"].upper()]
+            return Wallpaper(**{**wallpaper, "path": theme_path / wallpaper["path"]})
         case _:
             raise Exception('"wallpaper" must be a string or a dict')
-
-    file_path = theme_path / file
-    if not file_path.is_file():
-        raise Exception(f'"{file_path}" not found')
-
-    return Wallpaper(_path=file_path, _mode=mode)
 
 
 def parse_theme(
@@ -41,6 +33,17 @@ def parse_theme(
     name = path.name
 
     data = files.load_json(path / "theme.json")
+
+    modes = data.get("modes")
+    if isinstance(modes, dict):
+        for mode_name, mode in modes.items():
+            mode["name"] = mode_name
+            if isinstance(mode, dict) and "wallpaper" not in mode:
+                mode["wallpaper"] = data.get("wallpaper")
+
+    theme = Theme(**data, name=name, path=path)
+    return theme
+
     data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
     for mode_name, mode in data["modes"].items():
         if "wallpaper" in mode:
@@ -53,7 +56,7 @@ def parse_theme(
             if isinstance(mode["style"], str):
                 mode["style"] = global_styles[mode["style"]]
             elif isinstance(mode["style"], dict):
-                mode["style"] = Style("", Path(), keywords=mode["style"])
+                mode["style"] = Style(name="", path=Path(), keywords=mode["style"])
             else:
                 log.error('"style" must be a string or a dict')
         if isinstance(mode["palette"], str):
@@ -67,7 +70,7 @@ def parse_theme(
         if isinstance(data["style"], str):
             data["style"] = global_styles[data["style"]]
         elif isinstance(data["style"], dict):
-            data["style"] = Style("", Path(), keywords=data["style"])
+            data["style"] = Style(name="", path=Path(), keywords=data["style"])
 
     data["path"] = path
 

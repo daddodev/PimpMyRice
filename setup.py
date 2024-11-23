@@ -35,5 +35,6 @@ setuptools.setup(
         "opencv-python",
         "rich",
         "typing_extensions",
+        "pydantic",
     ],
 )

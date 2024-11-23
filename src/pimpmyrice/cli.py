@@ -68,4 +68,5 @@ async def cli() -> None:
 
         send_to_server(args)
     else:
-        await process_args(ThemeManager(), args)
+        tm = ThemeManager()
+        await process_args(tm, args)

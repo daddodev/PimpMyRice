@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import string
 import unicodedata
 from copy import deepcopy
@@ -8,49 +9,103 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Tuple
 
+from pydantic import BaseModel, Field, model_serializer, model_validator
+from pydantic.json_schema import SkipJsonSchema
+
 from . import colors as clr
 from . import files
+from .config import JSON_SCHEMA_DIR
 from .logger import get_logger
 from .utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
 
 log = get_logger(__name__)
 
 
-@dataclass
-class Style:
-    name: str
-    path: Path
+class Style(BaseModel):
+    name: str | None = Field(None, exclude=True)
+    path: Path | None = Field(None, exclude=True)
     keywords: dict[str, Any]
 
+    @model_serializer
+    def ser_model(self) -> dict[str, Any]:
+        return self.keywords
 
-@dataclass
-class ThemeConfig:
+    @model_validator(mode="before")
+    @classmethod
+    def handle_input(cls, values: dict[str, Any] | str) -> Any:
+        if isinstance(values, dict):
+            if "path" in values:
+                return values
+
+            return {"keywords": values}
+
+        return values
+
+
+class ThemeConfig(BaseModel):
     theme: str | None = None
     mode: str = "dark"
 
 
-@dataclass
-class Mode:
-    name: str
-    wallpaper: Wallpaper
+class Mode(BaseModel):
+    name: str = Field(exclude=True)
     palette: clr.Palette
+    wallpaper: Wallpaper | None = None
     style: Style | None = None
 
 
-@dataclass
-class Theme:
+class WallpaperMode(str, Enum):
+    FILL = "fill"
+    FIT = "fit"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class Wallpaper(BaseModel):
     path: Path
-    name: str
+    mode: WallpaperMode = WallpaperMode.FIT
+
+    @model_validator(mode="before")
+    def handle_input(cls, value: dict[str, Any] | str) -> Any:
+        if isinstance(value, str):
+            return {"path": value, "mode": "fill"}
+
+        # if isinstance(path, str):
+        #     values["path"] = Path(path)
+        return value
+
+    def __str__(self) -> str:
+        return str(self.path)
+
+
+class Theme(BaseModel):
+    path: Path = Field(exclude=True)
+    name: str = Field(exclude=True)
     wallpaper: Wallpaper
-    modes: dict[str, Mode] = field(default_factory=dict)
+    modes: dict[str, Mode] = {}
     style: Style | None = None
-    tags: list[str] = field(default_factory=list)
+    tags: list[str] = []
+
+    @model_validator(mode="before")
+    def handle_input(cls, values: dict[str, Any] | str) -> Any:
+        # if isinstance(values, dict):
+        #     if "path" in values:
+        #         return values
+        #
+        #     return {"keywords": values}
+
+        return values
 
     def __repr__(self) -> str:
         return f"Theme(name: {self.name})"
 
 
 def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
+    dump = theme.model_dump(mode="json")
+
+    print(json.dumps(dump, indent=4))
+    return dump
 
     def prettify(dic: dict[str, Any]) -> dict[str, Any]:
         new_dic: dict[str, Any] = {}
@@ -73,7 +128,7 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
                         mode["wallpaper"] = (
                             mode["wallpaper"].path
                             if for_api
-                            else mode["wallpaper"]._path.name
+                            else mode["wallpaper"].path.name
                         )
                     mode.pop("name")
                     mode["palette"] = mode["palette"].dump()
@@ -92,11 +147,12 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
     if not for_api:
         dump.pop("name")
         dump.pop("path")
-    dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper._path.name
+    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
+    dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper.path.name
 
     if for_api:
         try:
-            thumb = get_thumbnail(theme.wallpaper._path)
+            thumb = get_thumbnail(theme.wallpaper.path)
             dump["wallpaper_thumb"] = thumb
         except Exception as e:
             log.exception(e)
@@ -104,29 +160,6 @@ def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
             dump["wallpaper_thumb"] = ""
 
     return dump
-
-
-class WallpaperMode(Enum):
-    FILL = auto()
-    FIT = auto()
-
-
-@dataclass
-class Wallpaper:
-    _path: Path
-    _mode: WallpaperMode = WallpaperMode.FIT
-
-    @property
-    def path(self) -> str:
-        return self._path.as_posix()
-
-    @property
-    def mode(self) -> str:
-        mode = self._mode.name.lower()
-        return mode
-
-    def __str__(self) -> str:
-        return self.path
 
 
 async def gen_from_img(
@@ -142,12 +175,16 @@ async def gen_from_img(
     dark_colors = await clr.exp_gen_palette(image)
     light_colors = await clr.exp_gen_palette(image, light=True)
     modes = {
-        "dark": Mode("dark", wallpaper=Wallpaper(image), palette=dark_colors),
-        "light": Mode("light", wallpaper=Wallpaper(image), palette=light_colors),
+        "dark": Mode(name="dark", wallpaper=Wallpaper(path=image), palette=dark_colors),
+        "light": Mode(
+            name="light", wallpaper=Wallpaper(path=image), palette=light_colors
+        ),
     }
 
     theme_name = valid_theme_name(name or image.stem, themes)
-    theme = Theme(name=theme_name, path=Path(), wallpaper=Wallpaper(image), modes=modes)
+    theme = Theme(
+        name=theme_name, path=Path(), wallpaper=Wallpaper(path=image), modes=modes
+    )
 
     res.value = theme
 

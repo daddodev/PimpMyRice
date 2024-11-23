@@ -14,6 +14,7 @@ from .events import EventHandler
 from .files import download_file, load_json, save_json
 from .logger import get_logger
 from .module import ModuleManager
+from .schemas import generate_json_schemas
 from .theme_utils import Mode, Style, Theme, ThemeConfig
 from .utils import Result, Timer
 
@@ -30,6 +31,10 @@ class ThemeManager:
         self.config = self.get_config()
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
+
+        timer = Timer()
+        generate_json_schemas(self)
+        log.debug(f"json schemas generated in in {timer.elapsed():.4f} sec")
 
     def get_config(self) -> ThemeConfig:
         config = ThemeConfig(**load_json(CONFIG_FILE))
@@ -176,9 +181,9 @@ class ThemeManager:
 
         # NOTE full path update on rename is handled by dump_theme
         #      as it leaves only the filename
-        theme.wallpaper._path = tutils.import_image(theme.wallpaper._path, theme_dir)
+        theme.wallpaper.path = tutils.import_image(theme.wallpaper.path, theme_dir)
         for mode in theme.modes.values():
-            mode.wallpaper._path = tutils.import_image(mode.wallpaper._path, theme_dir)
+            mode.wallpaper.path = tutils.import_image(mode.wallpaper.path, theme_dir)
 
         dump = tutils.dump_theme(theme)
         save_json(theme_dir / "theme.json", dump)
@@ -225,7 +230,7 @@ class ThemeManager:
                         )
                 for mode in theme.modes.values():
                     mode.palette = await exp_gen_palette(
-                        img=mode.wallpaper._path, light=("light" in mode.name)
+                        img=mode.wallpaper.path, light=("light" in mode.name)
                     )
             save_res = await self.save_theme(theme=theme, old_name=theme.name)
             if save_res.value:
@@ -276,7 +281,7 @@ class ThemeManager:
         if not mode_name:
             mode_name = self.config.mode
 
-        theme: Theme = deepcopy(self.themes[theme_name])
+        theme = self.themes[theme_name]
 
         if mode_name not in theme.modes:
             new_mode = [*theme.modes.keys()][0]
