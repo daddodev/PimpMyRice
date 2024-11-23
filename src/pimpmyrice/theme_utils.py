@@ -9,7 +9,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Tuple
 
-from pydantic import BaseModel, Field, model_serializer, model_validator
+from pydantic import (BaseModel, Field, computed_field, model_serializer,
+                      model_validator)
 from pydantic.json_schema import SkipJsonSchema
 
 from . import colors as clr
@@ -66,6 +67,12 @@ class Wallpaper(BaseModel):
     path: Path
     mode: WallpaperMode = WallpaperMode.FIT
 
+    @computed_field
+    @property
+    def thumb(self) -> Path:
+        t = get_thumbnail(self.path)
+        return t
+
     @model_validator(mode="before")
     def handle_input(cls, value: dict[str, Any] | str) -> Any:
         if isinstance(value, str):
@@ -75,17 +82,17 @@ class Wallpaper(BaseModel):
         #     values["path"] = Path(path)
         return value
 
-    @model_serializer
-    def ser_model(self) -> dict[str, Any]:
-        return {"mode": self.mode, "path": self.path.name}
+    # @model_serializer
+    # def ser_model(self) -> dict[str, Any]:
+    #     return {"mode": self.mode, "path": self.path.name}
 
-    def __str__(self) -> str:
-        return str(self.path)
+    # def __str__(self) -> str:
+    #     return str(self.path)
 
 
 class Theme(BaseModel):
-    path: Path = Field(exclude=True)
-    name: str = Field(exclude=True)
+    path: Path = Field()
+    name: str = Field()
     wallpaper: Wallpaper
     modes: dict[str, Mode] = {}
     style: Style = Field(default_factory=Style)
@@ -105,29 +112,50 @@ class Theme(BaseModel):
         return f"Theme(name: {self.name})"
 
 
-def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
+def dump_theme_for_api(theme: Theme) -> dict[str, Any]:
     dump = theme.model_dump(mode="json")
-    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
 
-    print(json.dumps(dump, indent=4))
+    # dump["wallpaper"]["wallpaper_thumb"] = str(theme.wallpaper.thumb)
+    #
+    # for mode_name, mode in dump["modes"].items():
+    #     mode["wallpaper"]["wallpaper_thumb"] = str(
+    #         theme.modes[mode_name].wallpaper.thumb
+    #     )
+
+    print("dump for api:", json.dumps(dump, indent=4))
     return dump
 
-    if not for_api:
-        dump.pop("name")
-        dump.pop("path")
-    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
-    dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper.path.name
 
+def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
+    dump = theme.model_dump(mode="json", exclude={"name", "path"})
+    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
+
+    # print("dump for file:", json.dumps(dump, indent=4))
+    return dump
+
+
+def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
     if for_api:
-        try:
-            thumb = get_thumbnail(theme.wallpaper.path)
-            dump["wallpaper_thumb"] = thumb
-        except Exception as e:
-            log.exception(e)
-            log.error(f'failed generating thumbnail for theme "{theme.name}"')
-            dump["wallpaper_thumb"] = ""
+        return dump_theme_for_api(theme)
+    return dump_theme_for_file(theme)
 
-    return dump
+    #
+    # if not for_api:
+    #     dump.pop("name")
+    #     dump.pop("path")
+    # dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
+    # dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper.path.name
+    #
+    # if for_api:
+    #     try:
+    #         thumb = get_thumbnail(theme.wallpaper.path)
+    #         dump["wallpaper_thumb"] = thumb
+    #     except Exception as e:
+    #         log.exception(e)
+    #         log.error(f'failed generating thumbnail for theme "{theme.name}"')
+    #         dump["wallpaper_thumb"] = ""
+    #
+    # return dump
 
 
 async def gen_from_img(
