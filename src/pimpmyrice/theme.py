@@ -23,6 +23,7 @@ log = get_logger(__name__)
 
 class ThemeManager:
     def __init__(self) -> None:
+        timer = Timer()
         self.base_style = self.get_base_style()
         self.styles = self.get_styles()
         self.palettes = self.get_palettes()
@@ -32,9 +33,9 @@ class ThemeManager:
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
 
-        timer = Timer()
-        generate_json_schemas(self)
-        log.debug(f"json schemas generated in in {timer.elapsed():.4f} sec")
+        generate_json_schemas(self.base_style, [*self.mm.modules.keys()])
+
+        log.debug(f"ThemeManager initialized in {timer.elapsed():.4f} sec")
 
     def get_config(self) -> ThemeConfig:
         config = ThemeConfig(**load_json(CONFIG_FILE))
@@ -56,6 +57,7 @@ class ThemeManager:
     def save_base_style(self, base_style: dict[str, Any]) -> None:
         save_json(BASE_STYLE_FILE, base_style)
         self.base_style = base_style
+        generate_json_schemas(base_style, [*self.mm.modules.keys()])
 
     @staticmethod
     def get_styles() -> dict[str, Style]:

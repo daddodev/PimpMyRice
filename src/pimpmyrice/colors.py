@@ -126,8 +126,8 @@ class Color(PydanticColor):
 
 
 class Palette(BaseModel):
-    name: str | None = Field(None, exclude=True)
-    path: Path | None = Field(None, exclude=True)
+    name: str | None = Field(default=None, exclude=True)
+    path: Path | None = Field(default=None, exclude=True)
     term: dict[str, Color] | None = None
     normal: dict[str, Color] | None = None
     panel: dict[str, Color] | None = None

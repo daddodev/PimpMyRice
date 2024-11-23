@@ -23,8 +23,8 @@ log = get_logger(__name__)
 
 
 class Style(BaseModel):
-    name: str | None = Field(None, exclude=True)
-    path: Path | None = Field(None, exclude=True)
+    name: str | None = Field(default=None, exclude=True)
+    path: Path | None = Field(default=None, exclude=True)
     keywords: dict[str, Any] = {}
 
     @model_serializer
@@ -51,8 +51,8 @@ class ThemeConfig(BaseModel):
 class Mode(BaseModel):
     name: str = Field(exclude=True)
     palette: clr.Palette
-    wallpaper: Wallpaper | None = None
-    style: Style = Field(default_factory=Style)
+    wallpaper: Wallpaper
+    style: Style = Field(default_factory=lambda: Style())
 
 
 class WallpaperMode(str, Enum):
@@ -67,7 +67,7 @@ class Wallpaper(BaseModel):
     path: Path
     mode: WallpaperMode = WallpaperMode.FIT
 
-    @computed_field
+    @computed_field  # type: ignore
     @property
     def thumb(self) -> Path:
         t = get_thumbnail(self.path)
@@ -225,7 +225,7 @@ def gen_theme_dict(
 
     if theme.modes[mode_name].style:
         # idk why "type: ignore" is needed
-        theme_dict += theme.modes[mode_name].style.keywords  # type: ignore
+        theme_dict += theme.modes[mode_name].style.keywords
 
     if styles:
         for style in styles:

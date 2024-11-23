@@ -28,7 +28,7 @@ def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
     return model
 
 
-def generate_json_schemas(tm: ThemeManager) -> Result:
+def generate_json_schemas(base_style: dict[str, Any], modules: list[str]) -> Result:
     def rm(field: str, schema: dict[str, Any]) -> None:
         if field in schema:
             schema.pop(field)
@@ -41,7 +41,11 @@ def generate_json_schemas(tm: ThemeManager) -> Result:
 
     res = Result()
 
-    style_model = create_dynamic_model("Style", tm.base_style)
+    for module in modules:
+        if module not in base_style["modules_styles"]:
+            base_style["modules_styles"][module] = {}
+
+    style_model = create_dynamic_model("Style", base_style)
     style_schema = style_model.model_json_schema()
 
     theme_schema = Theme.model_json_schema()
