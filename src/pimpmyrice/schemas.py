@@ -19,9 +19,9 @@ def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
     for key, value in source.items():
         if isinstance(value, dict):
             nested_model = create_dynamic_model(f"{name}_{key}", value)
-            fields[key] = (Optional[nested_model], None)
+            fields[key] = (nested_model, {})
         else:
-            fields[key] = (Optional[type(value)], None)
+            fields[key] = (type(value), value)
 
     return create_model(name, **fields)  # type: ignore
 

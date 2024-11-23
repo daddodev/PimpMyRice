@@ -24,7 +24,7 @@ log = get_logger(__name__)
 class Style(BaseModel):
     name: str | None = Field(None, exclude=True)
     path: Path | None = Field(None, exclude=True)
-    keywords: dict[str, Any]
+    keywords: dict[str, Any] = {}
 
     @model_serializer
     def ser_model(self) -> dict[str, Any]:
@@ -51,7 +51,7 @@ class Mode(BaseModel):
     name: str = Field(exclude=True)
     palette: clr.Palette
     wallpaper: Wallpaper | None = None
-    style: Style | None = None
+    style: Style = Field(default_factory=Style)
 
 
 class WallpaperMode(str, Enum):
@@ -88,7 +88,7 @@ class Theme(BaseModel):
     name: str = Field(exclude=True)
     wallpaper: Wallpaper
     modes: dict[str, Mode] = {}
-    style: Style | None = None
+    style: Style = Field(default_factory=Style)
     tags: list[str] = []
 
     @model_validator(mode="before")
@@ -107,47 +107,11 @@ class Theme(BaseModel):
 
 def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
     dump = theme.model_dump(mode="json")
+    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
 
     print(json.dumps(dump, indent=4))
     return dump
 
-    def prettify(dic: dict[str, Any]) -> dict[str, Any]:
-        new_dic: dict[str, Any] = {}
-
-        for k, v in dic.items():
-            if not v:
-                continue
-
-            match (v):
-                case dict():
-                    new_dic[k] = prettify(v)
-                case Path():
-                    new_dic[k] = str(v)
-                case Mode():
-                    mode = deepcopy(vars(v))
-
-                    if mode["wallpaper"].path == theme.wallpaper.path:
-                        mode.pop("wallpaper")
-                    else:
-                        mode["wallpaper"] = (
-                            mode["wallpaper"].path
-                            if for_api
-                            else mode["wallpaper"].path.name
-                        )
-                    mode.pop("name")
-                    mode["palette"] = mode["palette"].dump()
-
-                    new_dic[k] = prettify(mode)
-                case Style():
-                    if v.name and v.path:
-                        new_dic[k] = v.name
-                    else:
-                        new_dic[k] = v.keywords
-                case _:
-                    new_dic[k] = v
-        return new_dic
-
-    dump = prettify(deepcopy(vars(theme)))
     if not for_api:
         dump.pop("name")
         dump.pop("path")
