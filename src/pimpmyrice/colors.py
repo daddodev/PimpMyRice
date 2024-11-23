@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Tuple
 
 import cv2
-from colour import Color as Colour
 from pydantic import BaseModel, Field
 from pydantic.color import Color as PydanticColor
 from sklearn.cluster import KMeans
@@ -35,7 +34,6 @@ class Color(PydanticColor):
         clr = Color(rgb)  # type:ignore
         return clr
 
-    #
     @property
     def maxsat(self) -> Color:
         h, *_ = self.as_hsl_tuple()
@@ -57,6 +55,14 @@ class Color(PydanticColor):
         h, s, v = colorsys.rgb_to_hsv(*rgb)
         clr = int(h * 360), s, v
         return clr
+
+    # TODO .hsl .hsl_tuple
+    # @property
+    # def hsl(self) -> tuple[int, float, float]:
+    #     rgb = self.as_rgb_tuple()
+    #     h, s, v = colorsys.rgb_to_hsv(*rgb)
+    #     clr = int(h * 360), s, v
+    #     return clr
 
     @property
     def rgb(self) -> str:
