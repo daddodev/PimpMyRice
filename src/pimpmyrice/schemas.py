@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
-    fields = {}
+    fields: dict[str, Any] = {}
     for key, value in source.items():
         if isinstance(value, dict):
             nested_model = create_dynamic_model(f"{name}_{key}", value)
@@ -23,7 +23,9 @@ def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
         else:
             fields[key] = (type(value), value)
 
-    return create_model(name, **fields)  # type: ignore
+    model: BaseModel = create_model(name, **fields)
+
+    return model
 
 
 def generate_json_schemas(tm: ThemeManager) -> Result:

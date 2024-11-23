@@ -185,7 +185,7 @@ class ThemeManager:
         for mode in theme.modes.values():
             mode.wallpaper.path = tutils.import_image(mode.wallpaper.path, theme_dir)
 
-        dump = tutils.dump_theme(theme)
+        dump = tutils.dump_theme_for_file(theme)
         save_json(theme_dir / "theme.json", dump)
 
         parsed_theme = self.parse_theme(THEMES_DIR / theme.name)

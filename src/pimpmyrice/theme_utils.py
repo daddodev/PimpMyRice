@@ -112,13 +112,6 @@ class Theme(BaseModel):
         return f"Theme(name: {self.name})"
 
 
-def dump_theme_for_api(theme: Theme) -> dict[str, Any]:
-    dump = theme.model_dump(mode="json")
-
-    print("dump for api:", json.dumps(dump, indent=4))
-    return dump
-
-
 def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
     dump = theme.model_dump(
         mode="json",
@@ -138,30 +131,6 @@ def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
 
     # print("dump for file:", json.dumps(dump, indent=4))
     return dump
-
-
-def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
-    if for_api:
-        return dump_theme_for_api(theme)
-    return dump_theme_for_file(theme)
-
-    #
-    # if not for_api:
-    #     dump.pop("name")
-    #     dump.pop("path")
-    # dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
-    # dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper.path.name
-    #
-    # if for_api:
-    #     try:
-    #         thumb = get_thumbnail(theme.wallpaper.path)
-    #         dump["wallpaper_thumb"] = thumb
-    #     except Exception as e:
-    #         log.exception(e)
-    #         log.error(f'failed generating thumbnail for theme "{theme.name}"')
-    #         dump["wallpaper_thumb"] = ""
-    #
-    # return dump
 
 
 async def gen_from_img(
