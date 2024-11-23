@@ -115,20 +115,26 @@ class Theme(BaseModel):
 def dump_theme_for_api(theme: Theme) -> dict[str, Any]:
     dump = theme.model_dump(mode="json")
 
-    # dump["wallpaper"]["wallpaper_thumb"] = str(theme.wallpaper.thumb)
-    #
-    # for mode_name, mode in dump["modes"].items():
-    #     mode["wallpaper"]["wallpaper_thumb"] = str(
-    #         theme.modes[mode_name].wallpaper.thumb
-    #     )
-
     print("dump for api:", json.dumps(dump, indent=4))
     return dump
 
 
 def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
-    dump = theme.model_dump(mode="json", exclude={"name", "path"})
+    dump = theme.model_dump(
+        mode="json",
+        exclude={
+            "name": True,
+            "path": True,
+            "wallpaper": {"thumb"},
+            "modes": {"__all__": {"wallpaper": {"thumb"}}},
+        },
+    )
     dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
+
+    dump["wallpaper"]["path"] = str(Path(dump["wallpaper"]["path"]).name)
+
+    for mode_name, mode in dump["modes"].items():
+        mode["wallpaper"]["path"] = str(Path(mode["wallpaper"]["path"]).name)
 
     # print("dump for file:", json.dumps(dump, indent=4))
     return dump
