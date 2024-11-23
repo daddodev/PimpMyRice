@@ -34,16 +34,22 @@ def parse_theme(
 
     data = files.load_json(path / "theme.json")
 
+    data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
+
     modes = data.get("modes")
     if isinstance(modes, dict):
         for mode_name, mode in modes.items():
             mode["name"] = mode_name
-            if isinstance(mode, dict) and "wallpaper" not in mode:
-                mode["wallpaper"] = data.get("wallpaper")
+            if isinstance(mode, dict):
+                if "wallpaper" not in mode:
+                    mode["wallpaper"] = data.get("wallpaper")
+                else:
+                    mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
 
     theme = Theme(**data, name=name, path=path)
     return theme
 
+    # _________________________________________ old
     data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
     for mode_name, mode in data["modes"].items():
         if "wallpaper" in mode:

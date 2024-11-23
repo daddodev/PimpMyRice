@@ -75,6 +75,10 @@ class Wallpaper(BaseModel):
         #     values["path"] = Path(path)
         return value
 
+    @model_serializer
+    def ser_model(self) -> dict[str, Any]:
+        return {"mode": self.mode, "path": self.path.name}
+
     def __str__(self) -> str:
         return str(self.path)
 
