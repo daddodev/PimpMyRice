@@ -111,7 +111,7 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]
         image = image.reshape(image.shape[0] * image.shape[1], 3)
         return image
 
-    def analyze(img: Any) -> list[tuple[Color, int]]:
+    def analyze(img: Any) -> list[tuple[tuple[float, float, float], int]]:
         clf = KMeans(n_clusters=5, random_state=0, n_init="auto")
         color_labels = clf.fit_predict(img)
         center_colors = clf.cluster_centers_
@@ -119,7 +119,11 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]
         ordered_colors = [center_colors[i] for i in counts.keys()]
 
         color_objects = [
-            (Color(ordered_colors[i]), c // 1000) for i, c in counts.items()
+            (
+                ordered_colors[i],
+                c // 1000,
+            )
+            for i, c in counts.items()
         ]
 
         color_objects.sort(key=lambda x: x[1], reverse=True)
@@ -135,14 +139,16 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]
 
     hsv_colors = []
     for color, count in colors:
-        hsv = color.hsv
-        hsv_colors.append(((hsv[0] / 360, hsv[1], hsv[2]), count))
+        hsv = colorsys.rgb_to_hsv(*[c / 255 for c in color])
+        c = (hsv[0] * 360, hsv[1], hsv[2])
+        hsv_colors.append((c, count))
 
     return hsv_colors
 
 
 async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
     # TODO refactor everything
+    # hsv: 340.32, 0.9, 0.9
 
     def apply_rule(clr: Tuple[float, ...], rule: dict[str, float]) -> Tuple[float, ...]:
         h, s, v = clr
@@ -355,11 +361,19 @@ async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
             rules["term"],
         )
 
-    for k, v in palette.items():
-        r, g, b = [int(x * 255) for x in colorsys.hsv_to_rgb(*v)]
-        palette[k] = Color((r, g, b))
+    def to_color(d: dict[str, Any]) -> dict[str, Any]:
+        for k, v in d.items():
+            if isinstance(v, dict):
+                d[k] = to_color(v)
+            else:
+                r, g, b = [
+                    int(x * 255) for x in colorsys.hsv_to_rgb(v[0] / 360, v[1], v[2])
+                ]
+                d[k] = Color((r, g, b))
 
-    # palette_display_string(palette["term"])
+        return d
+
+    palette = to_color(palette)
 
     p = Palette(**palette)
 

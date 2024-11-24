@@ -43,7 +43,7 @@ class WallpaperMode(str, Enum):
 
 class Wallpaper(BaseModel):
     path: Path
-    mode: WallpaperMode = WallpaperMode.FIT
+    mode: WallpaperMode = WallpaperMode.FILL
 
     @computed_field  # type: ignore
     @property
