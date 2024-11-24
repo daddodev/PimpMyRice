@@ -7,15 +7,16 @@ from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from . import module_utils as mutils
-from .config import LOCK_FILE, MODULES_DIR, REPOS_BASE_ADDR
-from .logger import get_logger
-from .module_utils import FileAction, Module
-from .parsers import parse_module
-from .utils import AttrDict, Lock, Result, Timer, is_locked, parse_string_vars
+from pimpmyrice import module_utils as mutils
+from pimpmyrice.config import LOCK_FILE, MODULES_DIR, REPOS_BASE_ADDR
+from pimpmyrice.logger import get_logger
+from pimpmyrice.module_utils import FileAction, Module
+from pimpmyrice.parsers import parse_module
+from pimpmyrice.utils import (AttrDict, Lock, Result, Timer, is_locked,
+                              parse_string_vars)
 
 if TYPE_CHECKING:
-    from .theme import ThemeManager
+    from pimpmyrice.theme import ThemeManager
 
 log = get_logger(__name__)
 

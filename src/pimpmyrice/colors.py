@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import colorsys
 from collections import Counter
-from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -12,10 +10,10 @@ from pydantic import BaseModel, Field
 from pydantic.color import Color as PydanticColor
 from sklearn.cluster import KMeans
 
-from . import files
-from .config import PALETTES_DIR
-from .logger import get_logger
-from .utils import Timer
+from pimpmyrice import files
+from pimpmyrice.config import PALETTES_DIR
+from pimpmyrice.logger import get_logger
+from pimpmyrice.utils import Timer
 
 log = get_logger(__name__)
 
@@ -51,7 +49,6 @@ class Color(PydanticColor):
         clr = hex[1:]
         return clr
 
-    # TODO .hsv .hsv_tuple
     @property
     def hsv(self) -> tuple[int, float, float]:
         rgb = self.as_rgb_tuple()
@@ -59,73 +56,15 @@ class Color(PydanticColor):
         clr = int(h * 360), s, v
         return clr
 
-    # TODO .hsl .hsl_tuple
+    # TODO hsl
     # @property
     # def hsl(self) -> tuple[int, float, float]:
-    #     rgb = self.as_rgb_tuple()
-    #     h, s, v = colorsys.rgb_to_hsv(*rgb)
-    #     clr = int(h * 360), s, v
     #     return clr
 
     @property
     def rgb(self) -> str:
         clr = self.as_rgb()
         return clr
-
-
-# class Color(Colour):  # type: ignore
-#     def __init__(
-#         self,
-#         *args: Any,
-#         hsv: tuple[float, float, float] | None = None,
-#         **kwargs: Any,
-#     ) -> None:
-#         if hsv:
-#             h, s, v = hsv
-#             r, g, b = colorsys.hsv_to_rgb(h / 360, s, v)
-#             super(Color, self).__init__(*args, **kwargs, rgb=(r, g, b))
-#         else:
-#             super(Color, self).__init__(*args, **kwargs)
-#
-#     def __str__(self) -> str:
-#         return str(self.get_hex_l())
-#
-#     @property
-#     def alt(self) -> Color:
-#         c = Color(self)
-#         lum = c.get_luminance()
-#         if lum > 0.5:
-#             c.set_luminance(lum - 0.05)
-#         else:
-#             c.set_luminance(lum + 0.05)
-#         return c
-#
-#     @property
-#     def maxsat(self) -> Color:
-#         c = Color(self)
-#         c.set_saturation(1)
-#         c.set_luminance(0.5)
-#         return c
-#
-#     @property
-#     def hsv(self) -> Tuple[float, ...]:
-#         h, s, v = colorsys.rgb_to_hsv(*self.get_rgb())
-#         h = h * 360
-#         hsv = tuple(round(n, 2) for n in (h, s, v))
-#         return hsv
-#
-#     @property
-#     def hsl(self) -> Tuple[float, ...]:
-#         color = tuple(round(v, 2) for v in self.get_hsl())
-#         return color
-#
-#     @property
-#     def nohash(self) -> str:
-#         return str(self)[1:]
-#
-#     @property
-#     def int_rgb(self) -> Tuple[int, ...]:
-#         return tuple(int(v * 255) for v in self.rgb)
 
 
 class Palette(BaseModel):
@@ -143,29 +82,12 @@ class Palette(BaseModel):
     accent: dict[str, Color] | None = None
     destructive: dict[str, Color] | None = None
 
-    # def copy(self) -> Palette:
-    #     return Palette(**deepcopy(vars(self)))
-
-    def dump(self, color_class: bool = False) -> dict[str, Any]:
-        dump = ensure_color(deepcopy(vars(self)), color=color_class)
-        dump.pop("name")
-        dump.pop("path")
-
-        sorted_term = dict(
-            sorted(dump["term"].items(), key=lambda v: int(v[0].removeprefix("color")))
-        )
-
-        dump["term"] = sorted_term
-
-        return dump
-
 
 def get_palettes() -> dict[str, Palette]:
     palettes = {}
     for file in PALETTES_DIR.iterdir():
         try:
             palette = files.load_json(file)
-            palette = ensure_color(palette)
             palettes[file.stem] = Palette(name=file.stem, path=file, **palette)
         except Exception as e:
             log.exception(e)
@@ -181,20 +103,6 @@ def palette_display_string(colors: Any) -> str:
     palette_string = " ".join(circles[0:8]) + "\r\n" + " ".join(circles[8:])
 
     return palette_string
-
-
-def ensure_color(dic: dict[str, Any], color: bool = True) -> dict[str, Any]:
-    for k, v in dic.items():
-        if k == "name" or k == "path":
-            continue
-
-        if isinstance(v, dict):
-            dic[k] = ensure_color(v, color)
-        elif color:
-            dic[k] = Color(v)
-        else:
-            dic[k] = str(v)
-    return dic
 
 
 def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]]:

@@ -1,22 +1,22 @@
 import random
 import shutil
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 import rich
 
-from . import parsers
-from . import theme_utils as tutils
-from .colors import Palette, exp_gen_palette, get_palettes
-from .config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
-from .events import EventHandler
-from .files import download_file, load_json, save_json
-from .logger import get_logger
-from .module import ModuleManager
-from .schemas import generate_json_schemas
-from .theme_utils import Mode, Style, Theme, ThemeConfig
-from .utils import Result, Timer
+from pimpmyrice import parsers
+from pimpmyrice import theme_utils as tutils
+from pimpmyrice.colors import Palette, exp_gen_palette, get_palettes
+from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR,
+                               THEMES_DIR)
+from pimpmyrice.events import EventHandler
+from pimpmyrice.files import download_file, load_json, save_json
+from pimpmyrice.logger import get_logger
+from pimpmyrice.module import ModuleManager
+from pimpmyrice.schemas import generate_json_schemas
+from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
+from pimpmyrice.utils import Result, Timer
 
 log = get_logger(__name__)
 

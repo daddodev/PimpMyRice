@@ -3,14 +3,13 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
-from .colors import palette_display_string
-from .config import (BASE_STYLE_FILE, CONFIG_FILE, MODULES_DIR, PALETTES_DIR,
-                     STYLES_DIR, THEMES_DIR)
-from .files import load_json
-from .logger import get_logger
-from .theme import ThemeManager
-from .theme_utils import ThemeConfig
-from .utils import Result
+from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, MODULES_DIR,
+                               PALETTES_DIR, STYLES_DIR, THEMES_DIR)
+from pimpmyrice.files import load_json
+from pimpmyrice.logger import get_logger
+from pimpmyrice.theme import ThemeManager
+from pimpmyrice.theme_utils import ThemeConfig
+from pimpmyrice.utils import Result
 
 log = get_logger(__name__)
 

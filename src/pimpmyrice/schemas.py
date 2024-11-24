@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-import json
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, create_model
 
+from pimpmyrice.config import JSON_SCHEMA_DIR
+from pimpmyrice.files import save_json
 from pimpmyrice.theme_utils import Theme
-
-from .config import JSON_SCHEMA_DIR
-from .files import save_json
-from .utils import Result
+from pimpmyrice.utils import Result
 
 if TYPE_CHECKING:
-    from .theme import ThemeManager
+    from pimpmyrice.theme import ThemeManager
 
 
 def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
@@ -86,8 +84,6 @@ def generate_json_schemas(tm: ThemeManager) -> Result:
     rm("path", theme_schema["$defs"]["Mode"])
 
     # theme_schema["$defs"]["Mode"]["required"].remove("wallpaper")
-
-    # print(json.dumps(theme_schema, indent=4))
 
     schema_path = JSON_SCHEMA_DIR / "theme.json"
     save_json(schema_path, theme_schema)

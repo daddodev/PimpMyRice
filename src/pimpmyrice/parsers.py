@@ -1,16 +1,20 @@
 from pathlib import Path
 from typing import Any, Union
 
-from . import files
-from .colors import Palette, ensure_color
-from .config import CLIENT_OS, MODULES_DIR, Os
-from .logger import get_logger
-from .module_utils import (FileAction, IfRunning, InitAction, LinkAction,
-                           Module, PythonAction, RunAction, ShellAction)
-from .theme_utils import Mode, Style, Theme, Wallpaper, WallpaperMode
-from .utils import parse_string_vars
+from pimpmyrice import files
+from pimpmyrice.colors import Palette
+from pimpmyrice.config import CLIENT_OS, MODULES_DIR, Os
+from pimpmyrice.logger import get_logger
+from pimpmyrice.module_utils import (FileAction, IfRunning, InitAction,
+                                     LinkAction, Module, PythonAction,
+                                     RunAction, ShellAction)
+from pimpmyrice.theme_utils import Style, Theme, Wallpaper
+from pimpmyrice.utils import parse_string_vars
 
 log = get_logger(__name__)
+
+
+# TODO use pydantic
 
 
 def parse_wallpaper(

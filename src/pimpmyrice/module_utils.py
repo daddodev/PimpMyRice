@@ -16,13 +16,13 @@ from typing import TYPE_CHECKING, Any, Union
 # from contextlib import redirect_stdout
 from uuid import uuid4
 
-from . import files, utils
-from .config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
-from .logger import get_logger
-from .utils import AttrDict, Result, Timer
+from pimpmyrice import files, utils
+from pimpmyrice.config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
+from pimpmyrice.logger import get_logger
+from pimpmyrice.utils import AttrDict, Result, Timer
 
 if TYPE_CHECKING:
-    from .theme import ThemeManager
+    from pimpmyrice.theme import ThemeManager
 
 log = get_logger(__name__)
 

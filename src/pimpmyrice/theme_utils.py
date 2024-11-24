@@ -1,23 +1,19 @@
 from __future__ import annotations
 
-import json
 import string
 import unicodedata
 from copy import deepcopy
-from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
 from typing import Any, Tuple
 
-from pydantic import (BaseModel, Field, computed_field, model_serializer,
-                      model_validator)
-from pydantic.json_schema import SkipJsonSchema
+from pydantic import BaseModel, Field, computed_field
 
-from . import colors as clr
-from . import files
-from .config import JSON_SCHEMA_DIR
-from .logger import get_logger
-from .utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
+from pimpmyrice import colors as clr
+from pimpmyrice import files
+from pimpmyrice.config import JSON_SCHEMA_DIR
+from pimpmyrice.logger import get_logger
+from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
 
 log = get_logger(__name__)
 
@@ -63,19 +59,6 @@ class Theme(BaseModel):
     modes: dict[str, Mode] = {}
     style: Style = {}
     tags: list[str] = []
-
-    @model_validator(mode="before")
-    def handle_input(cls, values: dict[str, Any] | str) -> Any:
-        # if isinstance(values, dict):
-        #     if "path" in values:
-        #         return values
-        #
-        #     return {"keywords": values}
-
-        return values
-
-    def __repr__(self) -> str:
-        return f"Theme(name: {self.name})"
 
 
 def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
@@ -178,7 +161,7 @@ def gen_theme_dict(
     palette = palette.copy()
     base_style = deepcopy(base_style)
 
-    theme_dict = AttrDict(palette.dump(color_class=True))
+    theme_dict = AttrDict(palette.model_dump())
 
     theme_dict["theme_name"] = theme.name
     theme_dict["wallpaper"] = theme.modes[mode_name].wallpaper

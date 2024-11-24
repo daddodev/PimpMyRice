@@ -12,8 +12,8 @@ import jinja2
 import psutil
 from typing_extensions import TypeVar
 
-from .config import CONFIG_DIR, HOME_DIR, MODULES_DIR
-from .logger import LogLevel, get_logger
+from pimpmyrice.config import CONFIG_DIR, HOME_DIR, MODULES_DIR
+from pimpmyrice.logger import LogLevel, get_logger
 
 # import jinja2schema
 
@@ -112,25 +112,6 @@ class Timer:
 
 
 # def get_template_keywords(template: str) -> list[str]:
-#     def get_keywords(dic, frm=""):
-#         keys = []
-#         for k, v in dic.items():
-#             if isinstance(v, jinja2schema.model.Dictionary):
-#                 for ke in get_keywords(v, k):
-#                     keys.append(f"{frm}{'.' if frm else ''}{ke}")
-#             else:
-#                 keys.append(f"{frm}{'.' if frm else ''}{k}")
-#         return keys
-#
-#     templ_vars = jinja2schema.infer(template=template)
-#     keywords = get_keywords(templ_vars)
-#     for k in keywords:
-#         print(k)
-#     # print(f"{template=}")
-#     # schema = jinja2schema.to_json_schema(templ_vars)
-#
-#     # print(f"required: {v}")
-#     # return required
 
 
 class AttrDict(dict[str, Any]):
