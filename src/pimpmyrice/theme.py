@@ -61,10 +61,7 @@ class ThemeManager:
 
     @staticmethod
     def get_styles() -> dict[str, Style]:
-        styles: dict[str, Style] = {
-            f.stem: Style(name=f.stem, path=f, keywords=load_json(f))
-            for f in STYLES_DIR.iterdir()
-        }
+        styles: dict[str, Style] = {f.stem: load_json(f) for f in STYLES_DIR.iterdir()}
         return styles
 
     @staticmethod

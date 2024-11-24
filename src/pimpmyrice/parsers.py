@@ -47,41 +47,7 @@ def parse_theme(
                     mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
 
     theme = Theme(**data, name=name, path=path)
-    return theme
-
-    # _________________________________________ old
-    data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
-    for mode_name, mode in data["modes"].items():
-        if "wallpaper" in mode:
-            mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
-        else:
-            mode["wallpaper"] = data["wallpaper"]
-
-        if "style" in mode:
-            # TODO multiple styles
-            if isinstance(mode["style"], str):
-                mode["style"] = global_styles[mode["style"]]
-            elif isinstance(mode["style"], dict):
-                mode["style"] = Style(name="", path=Path(), keywords=mode["style"])
-            else:
-                log.error('"style" must be a string or a dict')
-        if isinstance(mode["palette"], str):
-            mode["palette"] = global_palettes[mode["palette"]]
-        else:
-            mode["palette"] = Palette(**ensure_color(mode["palette"]))
-
-        data["modes"][mode_name] = Mode(name=mode_name, **mode)
-
-    if "style" in data:
-        if isinstance(data["style"], str):
-            data["style"] = global_styles[data["style"]]
-        elif isinstance(data["style"], dict):
-            data["style"] = Style(name="", path=Path(), keywords=data["style"])
-
-    data["path"] = path
-
-    theme = Theme(name=name, **data)
-
+    # TODO global style
     return theme
 
 

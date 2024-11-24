@@ -36,7 +36,7 @@ Options:
 
 import logging
 
-from docopt import DocoptExit, docopt  # type:ignore
+from docopt import DocoptExit, docopt
 
 from .args import process_args, process_edit_args
 from .config import SERVER_PID_FILE

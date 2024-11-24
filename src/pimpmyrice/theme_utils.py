@@ -22,25 +22,7 @@ from .utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
 log = get_logger(__name__)
 
 
-class Style(BaseModel):
-    name: str | None = Field(default=None, exclude=True)
-    path: Path | None = Field(default=None, exclude=True)
-    keywords: dict[str, Any] = {}
-
-    @model_serializer
-    def ser_model(self) -> dict[str, Any]:
-        return self.keywords
-
-    @model_validator(mode="before")
-    @classmethod
-    def handle_input(cls, values: dict[str, Any] | str) -> Any:
-        if isinstance(values, dict):
-            if "path" in values:
-                return values
-
-            return {"keywords": values}
-
-        return values
+type Style = dict[str, Any]
 
 
 class ThemeConfig(BaseModel):
@@ -52,7 +34,7 @@ class Mode(BaseModel):
     name: str = Field(exclude=True)
     palette: clr.Palette
     wallpaper: Wallpaper
-    style: Style = Field(default_factory=lambda: Style())
+    style: Style = {}
 
 
 class WallpaperMode(str, Enum):
@@ -73,29 +55,13 @@ class Wallpaper(BaseModel):
         t = get_thumbnail(self.path)
         return t
 
-    @model_validator(mode="before")
-    def handle_input(cls, value: dict[str, Any] | str) -> Any:
-        if isinstance(value, str):
-            return {"path": value, "mode": "fill"}
-
-        # if isinstance(path, str):
-        #     values["path"] = Path(path)
-        return value
-
-    # @model_serializer
-    # def ser_model(self) -> dict[str, Any]:
-    #     return {"mode": self.mode, "path": self.path.name}
-
-    # def __str__(self) -> str:
-    #     return str(self.path)
-
 
 class Theme(BaseModel):
     path: Path = Field()
     name: str = Field()
     wallpaper: Wallpaper
     modes: dict[str, Mode] = {}
-    style: Style = Field(default_factory=Style)
+    style: Style = {}
     tags: list[str] = []
 
     @model_validator(mode="before")
@@ -221,15 +187,14 @@ def gen_theme_dict(
     theme_dict += base_style
 
     if theme.style:
-        theme_dict += theme.style.keywords
+        theme_dict += theme.style
 
     if theme.modes[mode_name].style:
-        # idk why "type: ignore" is needed
-        theme_dict += theme.modes[mode_name].style.keywords
+        theme_dict += theme.modes[mode_name].style
 
     if styles:
         for style in styles:
-            theme_dict += style.keywords
+            theme_dict += style
 
     theme_dict, pending = resolve_refs(theme_dict)
     while len(pending) > 0:
