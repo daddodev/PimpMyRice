@@ -9,30 +9,20 @@ import sys
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Union
-# from contextlib import redirect_stdout
 from uuid import uuid4
 
-from . import files, utils
-from .config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
-from .logger import get_logger
-from .utils import AttrDict, Result, Timer
+from pimpmyrice import files, utils
+from pimpmyrice.config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
+from pimpmyrice.logger import get_logger
+from pimpmyrice.utils import AttrDict, Result, Timer
 
 if TYPE_CHECKING:
-    from .theme import ThemeManager
+    from pimpmyrice.theme import ThemeManager
 
 log = get_logger(__name__)
-
-
-# class ModuleException(Exception):
-#     def __init__(self, module_name: str, message: str):
-#         self.module_name = module_name
-#         self.message = f'error in "{self.module_name}": {message}'
-#
-#         super().__init__(self.message)
 
 
 @dataclass

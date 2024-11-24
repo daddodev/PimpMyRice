@@ -1,16 +1,20 @@
 from pathlib import Path
 from typing import Any, Union
 
-from . import files
-from .colors import Palette, ensure_color
-from .config import CLIENT_OS, MODULES_DIR, Os
-from .logger import get_logger
-from .module_utils import (FileAction, IfRunning, InitAction, LinkAction,
-                           Module, PythonAction, RunAction, ShellAction)
-from .theme_utils import Mode, Style, Theme, Wallpaper, WallpaperMode
-from .utils import parse_string_vars
+from pimpmyrice import files
+from pimpmyrice.colors import Palette
+from pimpmyrice.config import CLIENT_OS, MODULES_DIR, Os
+from pimpmyrice.logger import get_logger
+from pimpmyrice.module_utils import (FileAction, IfRunning, InitAction,
+                                     LinkAction, Module, PythonAction,
+                                     RunAction, ShellAction)
+from pimpmyrice.theme_utils import Style, Theme, Wallpaper
+from pimpmyrice.utils import parse_string_vars
 
 log = get_logger(__name__)
+
+
+# TODO use pydantic
 
 
 def parse_wallpaper(
@@ -18,19 +22,11 @@ def parse_wallpaper(
 ) -> Wallpaper:
     match wallpaper:
         case str(wallpaper):
-            file = wallpaper
-            mode = WallpaperMode.FILL
+            return Wallpaper(path=theme_path / wallpaper)
         case dict(wallpaper):
-            file = wallpaper["path"]
-            mode = WallpaperMode[wallpaper["mode"].upper()]
+            return Wallpaper(**{**wallpaper, "path": theme_path / wallpaper["path"]})
         case _:
             raise Exception('"wallpaper" must be a string or a dict')
-
-    file_path = theme_path / file
-    if not file_path.is_file():
-        raise Exception(f'"{file_path}" not found')
-
-    return Wallpaper(_path=file_path, _mode=mode)
 
 
 def parse_theme(
@@ -41,38 +37,21 @@ def parse_theme(
     name = path.name
 
     data = files.load_json(path / "theme.json")
+
     data["wallpaper"] = parse_wallpaper(data["wallpaper"], path)
-    for mode_name, mode in data["modes"].items():
-        if "wallpaper" in mode:
-            mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
-        else:
-            mode["wallpaper"] = data["wallpaper"]
 
-        if "style" in mode:
-            # TODO multiple styles
-            if isinstance(mode["style"], str):
-                mode["style"] = global_styles[mode["style"]]
-            elif isinstance(mode["style"], dict):
-                mode["style"] = Style("", Path(), keywords=mode["style"])
-            else:
-                log.error('"style" must be a string or a dict')
-        if isinstance(mode["palette"], str):
-            mode["palette"] = global_palettes[mode["palette"]]
-        else:
-            mode["palette"] = Palette(**ensure_color(mode["palette"]))
+    modes = data.get("modes")
+    if isinstance(modes, dict):
+        for mode_name, mode in modes.items():
+            mode["name"] = mode_name
+            if isinstance(mode, dict):
+                if "wallpaper" not in mode:
+                    mode["wallpaper"] = data.get("wallpaper")
+                else:
+                    mode["wallpaper"] = parse_wallpaper(mode["wallpaper"], path)
 
-        data["modes"][mode_name] = Mode(name=mode_name, **mode)
-
-    if "style" in data:
-        if isinstance(data["style"], str):
-            data["style"] = global_styles[data["style"]]
-        elif isinstance(data["style"], dict):
-            data["style"] = Style("", Path(), keywords=data["style"])
-
-    data["path"] = path
-
-    theme = Theme(name=name, **data)
-
+    theme = Theme(**data, name=name, path=path)
+    # TODO global style
     return theme
 
 

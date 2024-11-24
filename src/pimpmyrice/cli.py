@@ -36,13 +36,13 @@ Options:
 
 import logging
 
-from docopt import DocoptExit, docopt  # type:ignore
+from docopt import DocoptExit, docopt
 
-from .args import process_args, process_edit_args
-from .config import SERVER_PID_FILE
-from .logger import get_logger
-from .theme import ThemeManager
-from .utils import is_locked
+from pimpmyrice.args import process_args, process_edit_args
+from pimpmyrice.config import SERVER_PID_FILE
+from pimpmyrice.logger import get_logger
+from pimpmyrice.theme import ThemeManager
+from pimpmyrice.utils import is_locked
 
 log = get_logger(__name__)
 
@@ -68,4 +68,5 @@ async def cli() -> None:
 
         send_to_server(args)
     else:
-        await process_args(ThemeManager(), args)
+        tm = ThemeManager()
+        await process_args(tm, args)

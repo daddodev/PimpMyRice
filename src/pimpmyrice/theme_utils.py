@@ -3,130 +3,83 @@ from __future__ import annotations
 import string
 import unicodedata
 from copy import deepcopy
-from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
 from typing import Any, Tuple
 
-from . import colors as clr
-from . import files
-from .logger import get_logger
-from .utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
+from pydantic import BaseModel, Field, computed_field
+
+from pimpmyrice import colors as clr
+from pimpmyrice import files
+from pimpmyrice.config import JSON_SCHEMA_DIR
+from pimpmyrice.logger import get_logger
+from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
 
 log = get_logger(__name__)
 
 
-@dataclass
-class Style:
-    name: str
-    path: Path
-    keywords: dict[str, Any]
+type Style = dict[str, Any]
 
 
-@dataclass
-class ThemeConfig:
+class ThemeConfig(BaseModel):
     theme: str | None = None
     mode: str = "dark"
 
 
-@dataclass
-class Mode:
-    name: str
-    wallpaper: Wallpaper
+class Mode(BaseModel):
+    name: str = Field(exclude=True)
     palette: clr.Palette
-    style: Style | None = None
-
-
-@dataclass
-class Theme:
-    path: Path
-    name: str
     wallpaper: Wallpaper
-    modes: dict[str, Mode] = field(default_factory=dict)
-    style: Style | None = None
-    tags: list[str] = field(default_factory=list)
-
-    def __repr__(self) -> str:
-        return f"Theme(name: {self.name})"
+    style: Style = {}
 
 
-def dump_theme(theme: Theme, for_api: bool = False) -> dict[str, Any]:
-
-    def prettify(dic: dict[str, Any]) -> dict[str, Any]:
-        new_dic: dict[str, Any] = {}
-
-        for k, v in dic.items():
-            if not v:
-                continue
-
-            match (v):
-                case dict():
-                    new_dic[k] = prettify(v)
-                case Path():
-                    new_dic[k] = str(v)
-                case Mode():
-                    mode = deepcopy(vars(v))
-
-                    if mode["wallpaper"].path == theme.wallpaper.path:
-                        mode.pop("wallpaper")
-                    else:
-                        mode["wallpaper"] = (
-                            mode["wallpaper"].path
-                            if for_api
-                            else mode["wallpaper"]._path.name
-                        )
-                    mode.pop("name")
-                    mode["palette"] = mode["palette"].dump()
-
-                    new_dic[k] = prettify(mode)
-                case Style():
-                    if v.name and v.path:
-                        new_dic[k] = v.name
-                    else:
-                        new_dic[k] = v.keywords
-                case _:
-                    new_dic[k] = v
-        return new_dic
-
-    dump = prettify(deepcopy(vars(theme)))
-    if not for_api:
-        dump.pop("name")
-        dump.pop("path")
-    dump["wallpaper"] = theme.wallpaper.path if for_api else theme.wallpaper._path.name
-
-    if for_api:
-        try:
-            thumb = get_thumbnail(theme.wallpaper._path)
-            dump["wallpaper_thumb"] = thumb
-        except Exception as e:
-            log.exception(e)
-            log.error(f'failed generating thumbnail for theme "{theme.name}"')
-            dump["wallpaper_thumb"] = ""
-
-    return dump
-
-
-class WallpaperMode(Enum):
-    FILL = auto()
-    FIT = auto()
-
-
-@dataclass
-class Wallpaper:
-    _path: Path
-    _mode: WallpaperMode = WallpaperMode.FIT
-
-    @property
-    def path(self) -> str:
-        return self._path.as_posix()
-
-    @property
-    def mode(self) -> str:
-        mode = self._mode.name.lower()
-        return mode
+class WallpaperMode(str, Enum):
+    FILL = "fill"
+    FIT = "fit"
 
     def __str__(self) -> str:
-        return self.path
+        return self.value
+
+
+class Wallpaper(BaseModel):
+    path: Path
+    mode: WallpaperMode = WallpaperMode.FIT
+
+    @computed_field  # type: ignore
+    @property
+    def thumb(self) -> Path:
+        t = get_thumbnail(self.path)
+        return t
+
+
+class Theme(BaseModel):
+    path: Path = Field()
+    name: str = Field()
+    wallpaper: Wallpaper
+    modes: dict[str, Mode] = {}
+    style: Style = {}
+    tags: list[str] = []
+
+
+def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
+    dump = theme.model_dump(
+        mode="json",
+        exclude={
+            "name": True,
+            "path": True,
+            "wallpaper": {"thumb"},
+            "modes": {"__all__": {"wallpaper": {"thumb"}}},
+        },
+    )
+    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
+
+    dump["wallpaper"]["path"] = str(Path(dump["wallpaper"]["path"]).name)
+
+    for mode_name, mode in dump["modes"].items():
+        mode["wallpaper"]["path"] = str(Path(mode["wallpaper"]["path"]).name)
+
+    # print("dump for file:", json.dumps(dump, indent=4))
+    return dump
 
 
 async def gen_from_img(
@@ -142,12 +95,16 @@ async def gen_from_img(
     dark_colors = await clr.exp_gen_palette(image)
     light_colors = await clr.exp_gen_palette(image, light=True)
     modes = {
-        "dark": Mode("dark", wallpaper=Wallpaper(image), palette=dark_colors),
-        "light": Mode("light", wallpaper=Wallpaper(image), palette=light_colors),
+        "dark": Mode(name="dark", wallpaper=Wallpaper(path=image), palette=dark_colors),
+        "light": Mode(
+            name="light", wallpaper=Wallpaper(path=image), palette=light_colors
+        ),
     }
 
     theme_name = valid_theme_name(name or image.stem, themes)
-    theme = Theme(name=theme_name, path=Path(), wallpaper=Wallpaper(image), modes=modes)
+    theme = Theme(
+        name=theme_name, path=Path(), wallpaper=Wallpaper(path=image), modes=modes
+    )
 
     res.value = theme
 
@@ -204,7 +161,7 @@ def gen_theme_dict(
     palette = palette.copy()
     base_style = deepcopy(base_style)
 
-    theme_dict = AttrDict(palette.dump(color_class=True))
+    theme_dict = AttrDict(palette.model_dump())
 
     theme_dict["theme_name"] = theme.name
     theme_dict["wallpaper"] = theme.modes[mode_name].wallpaper
@@ -213,15 +170,14 @@ def gen_theme_dict(
     theme_dict += base_style
 
     if theme.style:
-        theme_dict += theme.style.keywords
+        theme_dict += theme.style
 
     if theme.modes[mode_name].style:
-        # idk why "type: ignore" is needed
-        theme_dict += theme.modes[mode_name].style.keywords  # type: ignore
+        theme_dict += theme.modes[mode_name].style
 
     if styles:
         for style in styles:
-            theme_dict += style.keywords
+            theme_dict += style
 
     theme_dict, pending = resolve_refs(theme_dict)
     while len(pending) > 0:

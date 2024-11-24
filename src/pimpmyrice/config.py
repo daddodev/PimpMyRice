@@ -45,5 +45,6 @@ CORE_PID_FILE = TEMP_DIR / "core.pid"
 SERVER_PID_FILE = TEMP_DIR / "server.pid"
 LOG_FILE = PIMP_CONFIG_DIR / "pimpmyrice.log"
 REPOS_LIST = PIMP_CONFIG_DIR / "remote_repos" / "list.txt"
+JSON_SCHEMA_DIR = PIMP_CONFIG_DIR / ".json_schemas"
 
 REPOS_BASE_ADDR = "https://github.com/pimpmyrice-modules"

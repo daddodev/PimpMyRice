@@ -1,27 +1,29 @@
 import random
 import shutil
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 import rich
 
-from . import parsers
-from . import theme_utils as tutils
-from .colors import Palette, exp_gen_palette, get_palettes
-from .config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
-from .events import EventHandler
-from .files import download_file, load_json, save_json
-from .logger import get_logger
-from .module import ModuleManager
-from .theme_utils import Mode, Style, Theme, ThemeConfig
-from .utils import Result, Timer
+from pimpmyrice import parsers
+from pimpmyrice import theme_utils as tutils
+from pimpmyrice.colors import Palette, exp_gen_palette, get_palettes
+from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR,
+                               THEMES_DIR)
+from pimpmyrice.events import EventHandler
+from pimpmyrice.files import download_file, load_json, save_json
+from pimpmyrice.logger import get_logger
+from pimpmyrice.module import ModuleManager
+from pimpmyrice.schemas import generate_json_schemas
+from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
+from pimpmyrice.utils import Result, Timer
 
 log = get_logger(__name__)
 
 
 class ThemeManager:
     def __init__(self) -> None:
+        timer = Timer()
         self.base_style = self.get_base_style()
         self.styles = self.get_styles()
         self.palettes = self.get_palettes()
@@ -30,6 +32,10 @@ class ThemeManager:
         self.config = self.get_config()
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
+
+        generate_json_schemas(self)
+
+        log.debug(f"ThemeManager initialized in {timer.elapsed():.4f} sec")
 
     def get_config(self) -> ThemeConfig:
         config = ThemeConfig(**load_json(CONFIG_FILE))
@@ -51,13 +57,11 @@ class ThemeManager:
     def save_base_style(self, base_style: dict[str, Any]) -> None:
         save_json(BASE_STYLE_FILE, base_style)
         self.base_style = base_style
+        generate_json_schemas(self)
 
     @staticmethod
     def get_styles() -> dict[str, Style]:
-        styles: dict[str, Style] = {
-            f.stem: Style(name=f.stem, path=f, keywords=load_json(f))
-            for f in STYLES_DIR.iterdir()
-        }
+        styles: dict[str, Style] = {f.stem: load_json(f) for f in STYLES_DIR.iterdir()}
         return styles
 
     @staticmethod
@@ -176,11 +180,11 @@ class ThemeManager:
 
         # NOTE full path update on rename is handled by dump_theme
         #      as it leaves only the filename
-        theme.wallpaper._path = tutils.import_image(theme.wallpaper._path, theme_dir)
+        theme.wallpaper.path = tutils.import_image(theme.wallpaper.path, theme_dir)
         for mode in theme.modes.values():
-            mode.wallpaper._path = tutils.import_image(mode.wallpaper._path, theme_dir)
+            mode.wallpaper.path = tutils.import_image(mode.wallpaper.path, theme_dir)
 
-        dump = tutils.dump_theme(theme)
+        dump = tutils.dump_theme_for_file(theme)
         save_json(theme_dir / "theme.json", dump)
 
         parsed_theme = self.parse_theme(THEMES_DIR / theme.name)
@@ -225,7 +229,7 @@ class ThemeManager:
                         )
                 for mode in theme.modes.values():
                     mode.palette = await exp_gen_palette(
-                        img=mode.wallpaper._path, light=("light" in mode.name)
+                        img=mode.wallpaper.path, light=("light" in mode.name)
                     )
             save_res = await self.save_theme(theme=theme, old_name=theme.name)
             if save_res.value:
@@ -276,7 +280,7 @@ class ThemeManager:
         if not mode_name:
             mode_name = self.config.mode
 
-        theme: Theme = deepcopy(self.themes[theme_name])
+        theme = self.themes[theme_name]
 
         if mode_name not in theme.modes:
             new_mode = [*theme.modes.keys()][0]

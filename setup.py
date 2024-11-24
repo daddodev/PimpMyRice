@@ -12,9 +12,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/daddodev/pimpmyrice",
-    # project_urls={
-    #     "Bug Tracker": "https://github.com/pypa/sampleproject/issues",
-    # },
+    project_urls={
+        "Bug Tracker": "https://github.com/daddodev/pimpmyrice/issues",
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -25,7 +25,6 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.12",
     install_requires=[
-        "colour",
         "docopt",
         "jinja2",
         "pyyaml",
@@ -35,5 +34,6 @@ setuptools.setup(
         "opencv-python",
         "rich",
         "typing_extensions",
+        "pydantic",
     ],
 )

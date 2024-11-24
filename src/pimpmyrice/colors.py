@@ -2,82 +2,74 @@ from __future__ import annotations
 
 import colorsys
 from collections import Counter
-from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Tuple
 
 import cv2
-from colour import Color as Colour
+from pydantic import BaseModel, Field
+from pydantic.color import Color as PydanticColor
 from sklearn.cluster import KMeans
 
-from . import files
-from .config import PALETTES_DIR
-from .logger import get_logger
-from .utils import Timer
+from pimpmyrice import files
+from pimpmyrice.config import PALETTES_DIR
+from pimpmyrice.logger import get_logger
+from pimpmyrice.utils import Timer
 
 log = get_logger(__name__)
 
 
-class Color(Colour):  # type: ignore
-    def __init__(
-        self,
-        *args: Any,
-        hsv: tuple[float, float, float] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        if hsv:
-            h, s, v = hsv
-            r, g, b = colorsys.hsv_to_rgb(h / 360, s, v)
-            super(Color, self).__init__(*args, **kwargs, rgb=(r, g, b))
-        else:
-            super(Color, self).__init__(*args, **kwargs)
-
-    def __str__(self) -> str:
-        return str(self.get_hex_l())
-
+class Color(PydanticColor):
     @property
     def alt(self) -> Color:
-        c = Color(self)
-        lum = c.get_luminance()
-        if lum > 0.5:
-            c.set_luminance(lum - 0.05)
+        h, s, v = colorsys.rgb_to_hsv(*self.as_rgb_tuple())
+        if v > 0.5:
+            v -= 0.1
         else:
-            c.set_luminance(lum + 0.05)
-        return c
+            v += 0.1
+        r, g, b = colorsys.hsv_to_rgb(h / 360, s, v)
+        rgb = tuple(int(x) for x in (r, g, b))
+        clr = Color(rgb)  # type:ignore
+        return clr
 
     @property
     def maxsat(self) -> Color:
-        c = Color(self)
-        c.set_saturation(1)
-        c.set_luminance(0.5)
-        return c
+        h, *_ = self.as_hsl_tuple()
+        hsl = f"hsl({int(h*360)}, 100%, 50%)"
+        clr = Color(hsl)
+
+        return clr
 
     @property
-    def hsv(self) -> Tuple[float, ...]:
-        h, s, v = colorsys.rgb_to_hsv(*self.get_rgb())
-        h = h * 360
-        hsv = tuple(round(n, 2) for n in (h, s, v))
-        return hsv
-
-    @property
-    def hsl(self) -> Tuple[float, ...]:
-        color = tuple(round(v, 2) for v in self.get_hsl())
-        return color
+    def hex(self) -> str:
+        return self.as_hex()
 
     @property
     def nohash(self) -> str:
-        return str(self)[1:]
+        hex = self.as_hex()
+        clr = hex[1:]
+        return clr
 
     @property
-    def int_rgb(self) -> Tuple[int, ...]:
-        return tuple(int(v * 255) for v in self.rgb)
+    def hsv(self) -> tuple[int, float, float]:
+        rgb = self.as_rgb_tuple()
+        h, s, v = colorsys.rgb_to_hsv(*rgb)
+        clr = int(h * 360), s, v
+        return clr
+
+    # TODO hsl
+    # @property
+    # def hsl(self) -> tuple[int, float, float]:
+    #     return clr
+
+    @property
+    def rgb(self) -> str:
+        clr = self.as_rgb()
+        return clr
 
 
-@dataclass
-class Palette:
-    name: str | None = None
-    path: Path | None = None
+class Palette(BaseModel):
+    name: str | None = Field(default=None, exclude=True)
+    path: Path | None = Field(default=None, exclude=True)
     term: dict[str, Color] | None = None
     normal: dict[str, Color] | None = None
     panel: dict[str, Color] | None = None
@@ -90,29 +82,12 @@ class Palette:
     accent: dict[str, Color] | None = None
     destructive: dict[str, Color] | None = None
 
-    def copy(self) -> Palette:
-        return Palette(**deepcopy(vars(self)))
-
-    def dump(self, color_class: bool = False) -> dict[str, Any]:
-        dump = ensure_color(deepcopy(vars(self)), color=color_class)
-        dump.pop("name")
-        dump.pop("path")
-
-        sorted_term = dict(
-            sorted(dump["term"].items(), key=lambda v: int(v[0].removeprefix("color")))
-        )
-
-        dump["term"] = sorted_term
-
-        return dump
-
 
 def get_palettes() -> dict[str, Palette]:
     palettes = {}
     for file in PALETTES_DIR.iterdir():
         try:
             palette = files.load_json(file)
-            palette = ensure_color(palette)
             palettes[file.stem] = Palette(name=file.stem, path=file, **palette)
         except Exception as e:
             log.exception(e)
@@ -130,26 +105,7 @@ def palette_display_string(colors: Any) -> str:
     return palette_string
 
 
-def ensure_color(
-    dic: dict[str, Any], color: bool = True, hsv: bool = False
-) -> dict[str, Any]:
-    for k, v in dic.items():
-        if k == "name" or k == "path":
-            continue
-
-        if isinstance(v, dict):
-            dic[k] = ensure_color(v, color, hsv)
-        elif color:
-            if hsv:
-                dic[k] = Color(hsv=v)
-            else:
-                dic[k] = Color(v)
-        else:
-            dic[k] = str(v)
-    return dic
-
-
-def exp_extract_colors(img: Path) -> list[tuple[tuple[float, ...], int]]:
+def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]]:
     def preprocess(raw: Any) -> Any:
         image = cv2.resize(raw, (600, 600), interpolation=cv2.INTER_AREA)
         image = image.reshape(image.shape[0] * image.shape[1], 3)
@@ -163,8 +119,7 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, ...], int]]:
         ordered_colors = [center_colors[i] for i in counts.keys()]
 
         color_objects = [
-            (Color(rgb=[v / 255 for v in ordered_colors[i]]), c // 1000)
-            for i, c in counts.items()
+            (Color(ordered_colors[i]), c // 1000) for i, c in counts.items()
         ]
 
         color_objects.sort(key=lambda x: x[1], reverse=True)
@@ -178,7 +133,10 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, ...], int]]:
     modified_image = preprocess(image)
     colors = analyze(modified_image)
 
-    hsv_colors = [(color.hsv, count) for (color, count) in colors]
+    hsv_colors = []
+    for color, count in colors:
+        hsv = color.hsv
+        hsv_colors.append(((hsv[0] / 360, hsv[1], hsv[2]), count))
 
     return hsv_colors
 
@@ -397,7 +355,9 @@ async def exp_gen_palette(img: Path, light: bool = False) -> Palette:
             rules["term"],
         )
 
-    palette = ensure_color(palette, hsv=True)
+    for k, v in palette.items():
+        r, g, b = [int(x * 255) for x in colorsys.hsv_to_rgb(*v)]
+        palette[k] = Color((r, g, b))
 
     # palette_display_string(palette["term"])
 
