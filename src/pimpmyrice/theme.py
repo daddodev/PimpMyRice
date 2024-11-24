@@ -33,7 +33,7 @@ class ThemeManager:
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
 
-        generate_json_schemas(self.base_style, [*self.mm.modules.keys()])
+        generate_json_schemas(self)
 
         log.debug(f"ThemeManager initialized in {timer.elapsed():.4f} sec")
 
@@ -57,7 +57,7 @@ class ThemeManager:
     def save_base_style(self, base_style: dict[str, Any]) -> None:
         save_json(BASE_STYLE_FILE, base_style)
         self.base_style = base_style
-        generate_json_schemas(base_style, [*self.mm.modules.keys()])
+        generate_json_schemas(self)
 
     @staticmethod
     def get_styles() -> dict[str, Style]:

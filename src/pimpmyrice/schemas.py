@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Field, create_model
@@ -28,7 +30,7 @@ def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
     return model
 
 
-def generate_json_schemas(base_style: dict[str, Any], modules: list[str]) -> Result:
+def generate_json_schemas(tm: ThemeManager) -> Result:
     def rm(field: str, schema: dict[str, Any]) -> None:
         if field in schema:
             schema.pop(field)
@@ -41,7 +43,9 @@ def generate_json_schemas(base_style: dict[str, Any], modules: list[str]) -> Res
 
     res = Result()
 
-    for module in modules:
+    base_style = deepcopy(tm.base_style)
+
+    for module in tm.mm.modules:
         if module not in base_style["modules_styles"]:
             base_style["modules_styles"][module] = {}
 
@@ -49,6 +53,25 @@ def generate_json_schemas(base_style: dict[str, Any], modules: list[str]) -> Res
     style_schema = style_model.model_json_schema()
 
     theme_schema = Theme.model_json_schema()
+
+    tags_schema = {
+        "default": [],
+        "items": {
+            "anyOf": [
+                {"type": "string"},
+                {
+                    "const": "",
+                    "enum": [t for t in tm.tags],
+                    "type": "string",
+                },
+            ]
+        },
+        "title": "Tags",
+        "type": "array",
+        "uniqueItems": True,
+    }
+
+    theme_schema["properties"]["tags"] = tags_schema
 
     theme_schema["$defs"] = {**theme_schema["$defs"], **style_schema["$defs"]}
     style_schema.pop("$defs")
@@ -63,6 +86,8 @@ def generate_json_schemas(base_style: dict[str, Any], modules: list[str]) -> Res
     rm("path", theme_schema["$defs"]["Mode"])
 
     # theme_schema["$defs"]["Mode"]["required"].remove("wallpaper")
+
+    # print(json.dumps(theme_schema, indent=4))
 
     schema_path = JSON_SCHEMA_DIR / "theme.json"
     save_json(schema_path, theme_schema)
