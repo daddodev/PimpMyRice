@@ -14,6 +14,8 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, Union
 from uuid import uuid4
 
+from pydantic import BaseModel, Field
+
 from pimpmyrice import files, utils
 from pimpmyrice.config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
 from pimpmyrice.logger import get_logger
@@ -73,6 +75,16 @@ class LinkAction:
 
 
 InitAction = Union[LinkAction]
+
+
+# class Module(BaseModel):
+#     name: str = Field(exclude=True)
+#     enabled: bool
+#     os: list[Os]
+#     map_modifier: str  # module_name.function_name
+#     # edit: list[PythonAction]  # module_name.function_name
+#     init: list[InitAction]
+#     run: list[RunAction]
 
 
 @dataclass

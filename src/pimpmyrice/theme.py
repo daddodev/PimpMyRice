@@ -14,7 +14,8 @@ from pimpmyrice.events import EventHandler
 from pimpmyrice.files import download_file, load_json, save_json
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module import ModuleManager
-from pimpmyrice.schemas import generate_json_schemas
+from pimpmyrice.schemas import (generate_json_schemas,
+                                generate_shell_suggestions)
 from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
 from pimpmyrice.utils import Result, Timer
 
@@ -33,7 +34,12 @@ class ThemeManager:
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
 
-        generate_json_schemas(self)
+        try:
+            generate_json_schemas(self)
+            generate_shell_suggestions(self)
+        except Exception as e:
+            log.exception(e)
+            log.error("failed to generate suggestions")
 
         log.debug(f"ThemeManager initialized in {timer.elapsed():.4f} sec")
 

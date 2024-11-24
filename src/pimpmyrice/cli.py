@@ -2,14 +2,27 @@
 See https://pimpmyrice.vercel.app/docs for more info.
 
 Usage:
-    pimp gen IMAGE... [options] [--apply]
-    pimp random [options]
-    pimp refresh [options]
-    pimp (set|delete) theme THEME [options]
-    pimp rename theme THEME NEW_NAME [options]
+    pimp gen IMAGE...       [--apply] [--name=NAME] [--tags=TAGS] [--style=STYLE]
+                            [--palette=PALETTE] [options]
+    pimp random             [--mode=MODE] [--name=NAME] [--tags=TAGS]
+                            [--exclude-tags=TAGS] [--include-modules=MODULES]
+                            [--exclude-modules=MODULES] [--style=STYLE]
+                            [--palette=PALETTE] [--print-theme-dict]
+                            [options]
+    pimp refresh            [--mode=MODE] [--include-modules=MODULES]
+                            [--exclude-modules=MODULES] [--style=STYLE]
+                            [--palette=PALETTE] [--print-theme-dict]
+                            [options]
+    pimp set theme THEME    [--mode=MODE] [--include-modules=MODULES]
+                            [--exclude-modules=MODULES] [--style=STYLE]
+                            [--palette=PALETTE] [--print-theme-dict]
+                            [options]
     pimp set mode MODE [options]
+    pimp delete theme THEME [options]
+    pimp rename theme THEME NEW_NAME [options]
     pimp toggle mode [options]
-    pimp (clone|delete) module MODULE [options]
+    pimp clone module MODULE_URL [options]
+    pimp delete module MODULE [options]
     pimp run module MODULE COMMAND [COMMAND_ARGS...] [options]
     pimp list (themes|tags|styles|palettes|keywords|modules) [options]
     pimp edit theme [THEME] [options]
@@ -17,21 +30,14 @@ Usage:
     pimp edit palette PALETTE [options]
     pimp edit keywords [options]
     pimp edit module MODULE [options]
-    pimp regen [options]
-    pimp rewrite [options]
+    pimp regen [--name=NAME] [options]
+    pimp rewrite [--name=NAME] [options]
     pimp info [options]
+    pimp --help
 
 Options:
-    --tags -t TAGS
-    --exclude-tags TAGS
-    --mode -m MODE
-    --name -n NAME
-    --palette -p PALETTE
-    --style -s STYLE
-    --include-modules MODULES
-    --exclude-modules MODULES
-    --print-theme-dict
-    --verbose -v
+    --verbose, -v
+
 """
 
 import logging

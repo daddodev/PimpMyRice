@@ -2,7 +2,7 @@
 
 ### The overkill theme manager
 
-_This project is currently in alpha and may be subject to breaking changes._
+_This project is currently in beta and may be subject to breaking changes._
 
 https://github.com/user-attachments/assets/999c8fc1-2f67-4da5-8780-6c0e11695007
 

@@ -35,5 +35,6 @@ setuptools.setup(
         "rich",
         "typing_extensions",
         "pydantic",
+        "infi.docopt-completion",
     ],
 )
