@@ -21,13 +21,13 @@ log = get_logger(__name__)
 class Color(PydanticColor):
     @property
     def alt(self) -> Color:
-        h, s, v = colorsys.rgb_to_hsv(*self.as_rgb_tuple())
+        h, s, v = colorsys.rgb_to_hsv(*[x / 255 for x in self.as_rgb_tuple()])
         if v > 0.5:
             v -= 0.1
         else:
             v += 0.1
-        r, g, b = colorsys.hsv_to_rgb(h / 360, s, v)
-        rgb = tuple(int(x) for x in (r, g, b))
+        r, g, b = colorsys.hsv_to_rgb(h, s, v)
+        rgb = tuple(int(x * 255) for x in (r, g, b))
         clr = Color(rgb)  # type:ignore
         return clr
 
@@ -52,7 +52,7 @@ class Color(PydanticColor):
     @property
     def hsv(self) -> tuple[int, float, float]:
         rgb = self.as_rgb_tuple()
-        h, s, v = colorsys.rgb_to_hsv(*rgb)
+        h, s, v = colorsys.rgb_to_hsv(*[x / 255 for x in rgb])
         clr = int(h * 360), s, v
         return clr
 
@@ -105,13 +105,13 @@ def palette_display_string(colors: Any) -> str:
     return palette_string
 
 
-def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]]:
+def exp_extract_colors(img: Path) -> list[tuple[tuple[int, float, float], int]]:
     def preprocess(raw: Any) -> Any:
         image = cv2.resize(raw, (600, 600), interpolation=cv2.INTER_AREA)
         image = image.reshape(image.shape[0] * image.shape[1], 3)
         return image
 
-    def analyze(img: Any) -> list[tuple[tuple[float, float, float], int]]:
+    def analyze(img: Any) -> list[tuple[tuple[int, float, float], int]]:
         clf = KMeans(n_clusters=5, random_state=0, n_init="auto")
         color_labels = clf.fit_predict(img)
         center_colors = clf.cluster_centers_
@@ -120,7 +120,7 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]
 
         color_objects = [
             (
-                ordered_colors[i],
+                Color(tuple(ordered_colors[i])).hsv,
                 c // 1000,
             )
             for i, c in counts.items()
@@ -128,7 +128,6 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]
 
         color_objects.sort(key=lambda x: x[1], reverse=True)
 
-        # display_color_palette({count: color.hex for color, count in color_objects})
         return color_objects
 
     image = cv2.imread(str(img))
@@ -137,13 +136,7 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[float, float, float], int]
     modified_image = preprocess(image)
     colors = analyze(modified_image)
 
-    hsv_colors = []
-    for color, count in colors:
-        hsv = colorsys.rgb_to_hsv(*[c / 255 for c in color])
-        c = (hsv[0] * 360, hsv[1], hsv[2])
-        hsv_colors.append((c, count))
-
-    return hsv_colors
+    return colors
 
 
 async def exp_gen_palette(img: Path, light: bool = False) -> Palette:

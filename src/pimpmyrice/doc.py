@@ -37,5 +37,4 @@ Usage:
 
 Options:
     --verbose, -v
-
 """

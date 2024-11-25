@@ -102,16 +102,14 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
 
     doc = cli_doc.replace("THEME", f'({"|".join(tm.themes.keys())})')
     doc = doc.replace("TAGS", f'({"|".join(tm.tags)})')
-    doc = doc.replace("MODULE", f'({"|".join(tm.mm.modules.keys())})')
+    doc = doc.replace(r"\bMODULE\b", f'({"|".join(tm.mm.modules.keys())})')
 
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(printable_usage(doc)), options)
     param_tree = CommandParams()
     build_command_tree(pattern, param_tree)
-
     option_help = dict(list(get_options_descriptions(doc)))
 
     generators_to_use = _autodetect_generators()
-
     for generator in generators_to_use:
         generator.generate(os.path.basename("pimp"), param_tree, option_help)
