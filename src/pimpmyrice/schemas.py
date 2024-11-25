@@ -7,12 +7,11 @@ from typing import TYPE_CHECKING, Any
 from docopt import formal_usage, parse_defaults, parse_pattern, printable_usage
 from infi.docopt_completion.common import (CommandParams, build_command_tree,
                                            get_options_descriptions)
-from infi.docopt_completion.docopt_completion import (_autodetect_generators,
-                                                      docopt_completion)
+from infi.docopt_completion.docopt_completion import _autodetect_generators
 from pydantic import BaseModel, create_model
 
-from pimpmyrice.cli import __doc__ as cli_doc
 from pimpmyrice.config import JSON_SCHEMA_DIR
+from pimpmyrice.doc import __doc__ as cli_doc
 from pimpmyrice.files import save_json
 from pimpmyrice.theme_utils import Theme
 from pimpmyrice.utils import Result
