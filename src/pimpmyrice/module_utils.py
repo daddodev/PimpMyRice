@@ -279,7 +279,9 @@ class Module(BaseModel):
     run: list[ModuleRun] = []
     commands: dict[str, ModuleCommand] = {}
 
-    async def execute_command(self, command_name: str, tm: ThemeManager) -> Result:
+    async def execute_command(
+        self, command_name: str, tm: ThemeManager, *args: Any, **kwargs: Any
+    ) -> Result:
         res = Result()
 
         if command_name not in self.commands:
@@ -288,7 +290,7 @@ class Module(BaseModel):
             )
 
         try:
-            action_res = await self.commands[command_name].run(tm=tm)
+            action_res = await self.commands[command_name].run(tm=tm, *args, **kwargs)
             res += action_res
             if not action_res.ok:
                 return res

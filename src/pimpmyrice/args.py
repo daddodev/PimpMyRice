@@ -117,7 +117,10 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
         elif args["run"]:
             return await tm.mm.run_module_command(
-                tm, module_name=args["MODULE"], command=args["COMMAND"]
+                tm,
+                module_name=args["MODULE"],
+                command=args["COMMAND"],
+                cmd_args=args["COMMAND_ARGS"],
             )
 
         elif args["reinit"]:

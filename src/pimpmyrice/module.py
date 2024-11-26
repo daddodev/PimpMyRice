@@ -5,7 +5,7 @@ import os
 import shutil
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pimpmyrice import module_utils as mutils
 from pimpmyrice.config import LOCK_FILE, MODULES_DIR, REPOS_BASE_ADDR
@@ -123,14 +123,19 @@ class ModuleManager:
             return res
 
     async def run_module_command(
-        self, tm: ThemeManager, module_name: str, command: str
+        self,
+        tm: ThemeManager,
+        module_name: str,
+        command: str,
+        *args: Any,
+        **kwargs: Any,
     ) -> Result:
         res = Result()
         if module_name not in self.modules:
             return res.error(f'module "{module_name}" not found')
 
         module = self.modules[module_name]
-        res += await module.execute_command(command, tm)
+        res += await module.execute_command(command, tm, *args, **kwargs)
 
         return res
 
