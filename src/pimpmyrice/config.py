@@ -4,10 +4,13 @@ from enum import Enum
 from pathlib import Path
 
 
-class Os(Enum):
-    LINUX = 1
-    WINDOWS = 2
-    MAC = 3
+class Os(str, Enum):
+    LINUX = "linux"
+    WINDOWS = "windows"
+    MAC = "mac"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 HOME_DIR = Path.home()

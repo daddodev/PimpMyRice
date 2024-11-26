@@ -7,9 +7,10 @@ from typing import Any
 import requests
 import yaml
 
-from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, LOG_FILE,
-                               MODULES_DIR, PALETTES_DIR, PIMP_CONFIG_DIR,
-                               STYLES_DIR, TEMP_DIR, THEMES_DIR)
+from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, JSON_SCHEMA_DIR,
+                               LOG_FILE, MODULES_DIR, PALETTES_DIR,
+                               PIMP_CONFIG_DIR, STYLES_DIR, TEMP_DIR,
+                               THEMES_DIR)
 from pimpmyrice.keywords import default_base_style
 from pimpmyrice.logger import get_logger
 from pimpmyrice.utils import Result
@@ -22,6 +23,17 @@ def load_yaml(file: Path) -> dict[str, Any]:
         return dict(yaml.load(f, Loader=yaml.Loader))
 
 
+def save_yaml(file: Path, data: dict[str, Any]) -> None:
+    dump = yaml.dump(data, indent=4, default_flow_style=False)
+
+    if file.name in ("module.yaml", "theme.yaml"):
+        schema_str = f"# yaml-language-server: $schema={JSON_SCHEMA_DIR}/{file.name.split(".")[0]}.json\n\n"
+        dump = schema_str + dump
+
+    with open(file, "w") as f:
+        f.write(dump)
+
+
 def load_json(file: Path) -> dict[str, Any]:
     with open(file) as f:
 
@@ -32,9 +44,13 @@ def load_json(file: Path) -> dict[str, Any]:
 
 
 def save_json(file: Path, data: dict[str, Any]) -> None:
-    jsn = json.dumps(data, indent=4)
+    if file.name in ("module.json", "theme.json") and file.parent != JSON_SCHEMA_DIR:
+        data["$schema"] = str(JSON_SCHEMA_DIR / file.name.split(".")[0]) + ".json"
+
+    dump = json.dumps(data, indent=4)
+
     with open(file, "w") as f:
-        f.write(jsn)
+        f.write(dump)
 
 
 def import_image(image_path: Path, theme_dir: Path) -> Path:

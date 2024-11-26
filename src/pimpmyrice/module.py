@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from pimpmyrice import module_utils as mutils
 from pimpmyrice.config import LOCK_FILE, MODULES_DIR, REPOS_BASE_ADDR
+from pimpmyrice.files import load_yaml, save_json, save_yaml
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module_utils import FileAction, Module
 from pimpmyrice.parsers import parse_module
@@ -94,10 +95,10 @@ class ModuleManager:
                 if not module.enabled:
                     continue
 
-                if module.pre_run_actions:
+                if module.pre_run:
                     pre_runners.append(name)
 
-                if module.run_actions:
+                if module.run:
                     runners.append(name)
 
             if len(runners) == 0:
@@ -110,7 +111,7 @@ class ModuleManager:
             for name in pre_runners:
                 mod_timer = Timer()
 
-                mod_res = await self.modules[name].pre_run(deepcopy(theme_dict))
+                mod_res = await self.modules[name].execute_pre_run(deepcopy(theme_dict))
                 res += mod_res
 
                 if mod_res.value:
@@ -119,7 +120,7 @@ class ModuleManager:
                         f"modifier applied in {mod_timer.elapsed():.2f} seconds", name
                     )
 
-            tasks = [self.modules[name].run(theme_dict) for name in runners]
+            tasks = [self.modules[name].execute_run(theme_dict) for name in runners]
 
             for t in asyncio.as_completed(tasks):
                 task_res = await t
@@ -149,6 +150,25 @@ class ModuleManager:
 
         return res
 
+    async def rewrite_modules(
+        self,
+        name_includes: str | None = None,
+    ) -> Result:
+        res = Result()
+
+        for module in self.modules.values():
+            if name_includes and name_includes not in module.name:
+                continue
+
+            try:
+                dump = module.model_dump(mode="json")
+                # save_yaml(MODULES_DIR / module.name / "module.yaml", dump)
+                save_json(MODULES_DIR / module.name / "module.json", dump)
+                res.success(f'module "{module.name}" rewritten')
+            except Exception as e:
+                res.exception(e)
+        return res
+
     async def clone_module(self, source: str | Path) -> Result:
         res = Result()
 
@@ -165,7 +185,7 @@ class ModuleManager:
                 yaml_path=MODULES_DIR / name / "module.yaml",
             )
 
-            for action in module.run_actions:
+            for action in module.run:
                 if isinstance(action, FileAction):
                     target = Path(parse_string_vars(action.target))
                     if target.exists():
@@ -190,8 +210,8 @@ class ModuleManager:
                     os.symlink(action.template, link_path)
                     res.info(f'linked "{link_path}" to "{action.template}"')
 
-            if module.init_actions:
-                init_res = await module.init()
+            if module.init:
+                init_res = await module.execute_init()
                 res += init_res
 
             # TODO clean up files

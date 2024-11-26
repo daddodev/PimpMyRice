@@ -171,7 +171,10 @@ mode: {tm.config.mode}
         return await tm.rewrite_themes(regen_colors=True, name_includes=args["--name"])
 
     elif args["rewrite"]:
-        return await tm.rewrite_themes(name_includes=args["--name"])
+        if args["themes"]:
+            return await tm.rewrite_themes(name_includes=args["--name"])
+        elif args["modules"]:
+            return await tm.mm.rewrite_modules(name_includes=args["--name"])
 
     return res.error("not implemented")
     return res.error("not implemented")

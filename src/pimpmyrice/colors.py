@@ -8,6 +8,7 @@ from typing import Any, Tuple
 import cv2
 from pydantic import BaseModel, Field
 from pydantic.color import Color as PydanticColor
+from pydantic.json_schema import SkipJsonSchema
 from sklearn.cluster import KMeans
 
 from pimpmyrice import files
@@ -68,8 +69,8 @@ class Color(PydanticColor):
 
 
 class Palette(BaseModel):
-    name: str | None = Field(default=None, exclude=True)
-    path: Path | None = Field(default=None, exclude=True)
+    name: SkipJsonSchema[str | None] = Field(default=None, exclude=True)
+    path: SkipJsonSchema[Path | None] = Field(default=None, exclude=True)
     term: dict[str, Color] | None = None
     normal: dict[str, Color] | None = None
     panel: dict[str, Color] | None = None

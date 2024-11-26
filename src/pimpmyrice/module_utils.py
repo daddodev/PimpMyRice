@@ -9,12 +9,16 @@ import sys
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.json_schema import (JsonDict, JsonSchemaExtraCallable,
+                                  SkipJsonSchema)
+from typing_extensions import Annotated
 
 from pimpmyrice import files, utils
 from pimpmyrice.config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
@@ -27,9 +31,26 @@ if TYPE_CHECKING:
 log = get_logger(__name__)
 
 
+def add_action_type_to_schema(
+    action_type: str,
+    schema: JsonDict,
+) -> None:
+    schema["properties"]["action"] = {  # type: ignore
+        "title": "Action type",
+        "type": "string",
+        "const": action_type,
+    }
+    schema["required"].append("action")  # type: ignore
+
+
 class ShellAction(BaseModel):
-    module_name: str = Field(exclude=True)
+    action: Literal["shell"] = Field(default="shell")
+    module_name: SkipJsonSchema[str] = Field(exclude=True)
     command: str
+
+    model_config = ConfigDict(
+        json_schema_extra=partial(add_action_type_to_schema, "shell")
+    )
 
     async def run(self, theme_dict: AttrDict) -> Result:
         res = Result()
@@ -62,9 +83,14 @@ class ShellAction(BaseModel):
 
 
 class FileAction(BaseModel):
-    module_name: str = Field(exclude=True)
+    action: Literal["file"] = Field(default="file")
+    module_name: SkipJsonSchema[str] = Field(exclude=True)
     template: str
     target: str
+
+    model_config = ConfigDict(
+        json_schema_extra=partial(add_action_type_to_schema, "file")
+    )
 
     async def run(self, theme_dict: AttrDict) -> Result:
         res = Result()
@@ -107,9 +133,14 @@ class FileAction(BaseModel):
 
 
 class PythonAction(BaseModel):
-    module_name: str = Field(exclude=True)
-    py_file_path: Path = Field(exclude=True)
+    action: Literal["python"] = Field(default="python")
+    module_name: SkipJsonSchema[str] = Field(exclude=True)
+    py_file_path: Path
     function_name: str
+
+    model_config = ConfigDict(
+        json_schema_extra=partial(add_action_type_to_schema, "python")
+    )
 
     async def run(self, *args: Any, **kwargs: Any) -> Result[Any]:
         res = Result()
@@ -147,9 +178,14 @@ class PythonAction(BaseModel):
 
 
 class IfRunningAction(BaseModel):
-    module_name: str = Field(exclude=True)
+    action: Literal["if_running"] = Field(default="if_running")
+    module_name: SkipJsonSchema[str] = Field(exclude=True)
     program_name: str
     should_be_running: bool
+
+    model_config = ConfigDict(
+        json_schema_extra=partial(add_action_type_to_schema, "if_running")
+    )
 
     async def run(self, theme_map: AttrDict) -> Result:
         res = Result()
@@ -171,9 +207,14 @@ class IfRunningAction(BaseModel):
 
 
 class LinkAction(BaseModel):
-    module_name: str = Field(exclude=True)
+    action: Literal["link"] = Field(default="link")
+    module_name: SkipJsonSchema[str] = Field(exclude=True)
     origin: Path
     destination: Path
+
+    model_config = ConfigDict(
+        json_schema_extra=partial(add_action_type_to_schema, "link")
+    )
 
     async def run(self) -> Result:
         res = Result()
@@ -203,24 +244,25 @@ ModuleInit = Union[LinkAction]
 
 ModulePreRun = Union[PythonAction]
 
+
 ModuleRun = Union[ShellAction, FileAction, PythonAction, IfRunningAction]
 
 ModuleCommand = Union[PythonAction]
 
 
 class Module(BaseModel):
-    name: str = Field(exclude=True)
+    name: SkipJsonSchema[str] = Field(exclude=True)
     enabled: bool = True
     os: list[Os] = [o for o in Os]
-    init_actions: list[ModuleInit] = []
-    pre_run_actions: list[ModulePreRun] = []
-    run_actions: list[ModuleRun] = []
+    init: list[ModuleInit] = []
+    pre_run: list[ModulePreRun] = []
+    run: list[ModuleRun] = []
     commands: dict[str, ModuleCommand] = {}
 
-    async def init(self) -> Result:
+    async def execute_init(self) -> Result:
         res = Result()
 
-        for action in self.init_actions:
+        for action in self.init:
             try:
                 action_res = await action.run()
                 res += action_res
@@ -233,11 +275,11 @@ class Module(BaseModel):
 
         return res
 
-    async def pre_run(self, theme_dict: AttrDict) -> Result[AttrDict]:
+    async def execute_pre_run(self, theme_dict: AttrDict) -> Result[AttrDict]:
         res: Result[AttrDict] = Result()
 
         try:
-            for action in self.pre_run_actions:
+            for action in self.pre_run:
                 action_res = await action.run(theme_dict)
                 res += action_res
                 if action_res.value:
@@ -249,7 +291,7 @@ class Module(BaseModel):
             res.value = theme_dict
             return res
 
-    async def run(self, theme_dict: AttrDict) -> Result:
+    async def execute_run(self, theme_dict: AttrDict) -> Result:
         res = Result(name=self.name)
         timer = Timer()
 
@@ -259,7 +301,7 @@ class Module(BaseModel):
             else deepcopy(theme_dict)
         )
 
-        for action in self.run_actions:
+        for action in self.run:
             try:
                 action_res = await action.run(theme_dict)
                 res += action_res

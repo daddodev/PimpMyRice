@@ -220,11 +220,11 @@ def parse_module(yaml_path: Path) -> Module:
 
     module = Module(
         name=module_name,
-        pre_run_actions=pre_run,
-        run_actions=run,
+        init=init,
+        pre_run=pre_run,
+        run=run,
         enabled=enabled,
         os=supported_os,
-        init_actions=init,
     )
 
     return module

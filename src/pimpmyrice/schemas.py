@@ -14,6 +14,7 @@ from pydantic import BaseModel, create_model
 from pimpmyrice.config import JSON_SCHEMA_DIR
 from pimpmyrice.doc import __doc__ as cli_doc
 from pimpmyrice.files import save_json
+from pimpmyrice.module_utils import Module
 from pimpmyrice.theme_utils import Theme
 from pimpmyrice.utils import Result
 
@@ -35,17 +36,7 @@ def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
     return model
 
 
-def generate_json_schemas(tm: ThemeManager) -> Result:
-    def rm(field: str, schema: dict[str, Any]) -> None:
-        if field in schema:
-            schema.pop(field)
-
-        if field in schema.get("properties", {}):
-            schema["properties"].pop(field)
-
-        if field in schema.get("required", []):
-            schema["required"].remove(field)
-
+def generate_theme_json_schema(tm: ThemeManager) -> Result:
     res = Result()
 
     base_style = deepcopy(tm.base_style)
@@ -84,18 +75,25 @@ def generate_json_schemas(tm: ThemeManager) -> Result:
 
     theme_schema["$defs"]["Style"] = style_schema
 
-    rm("name", theme_schema)
-    rm("path", theme_schema)
+    theme_schema["$defs"]["Mode"]["properties"]["style"] = {"$ref": "#/$defs/Style"}
 
-    rm("name", theme_schema["$defs"]["Mode"])
-    rm("path", theme_schema["$defs"]["Mode"])
-
-    # theme_schema["$defs"]["Mode"]["required"].remove("wallpaper")
+    theme_schema["properties"]["style"] = {"$ref": "#/$defs/Style"}
 
     schema_path = JSON_SCHEMA_DIR / "theme.json"
     save_json(schema_path, theme_schema)
 
     return res.debug(f'theme schema saved to "{schema_path}"')
+
+
+def generate_module_json_schema() -> Result:
+    res = Result()
+
+    module_schema = Module.model_json_schema()
+
+    schema_path = JSON_SCHEMA_DIR / "module.json"
+    save_json(schema_path, module_schema)
+
+    return res.debug(f'module schema saved to "{schema_path}"')
 
 
 def generate_shell_suggestions(tm: ThemeManager) -> None:

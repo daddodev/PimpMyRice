@@ -31,7 +31,7 @@ Usage:
     pimp edit keywords [options]
     pimp edit module MODULE [options]
     pimp regen [--name=NAME] [options]
-    pimp rewrite [--name=NAME] [options]
+    pimp rewrite (themes|modules) [--name=NAME] [options]
     pimp info [options]
     pimp --help
 

@@ -5,17 +5,15 @@ from typing import Any
 
 import rich
 
-from pimpmyrice import parsers
+from pimpmyrice import parsers, schemas
 from pimpmyrice import theme_utils as tutils
 from pimpmyrice.colors import Palette, exp_gen_palette, get_palettes
 from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR,
                                THEMES_DIR)
 from pimpmyrice.events import EventHandler
-from pimpmyrice.files import download_file, load_json, save_json
+from pimpmyrice.files import download_file, load_json, save_json, save_yaml
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module import ModuleManager
-from pimpmyrice.schemas import (generate_json_schemas,
-                                generate_shell_suggestions)
 from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
 from pimpmyrice.utils import Result, Timer
 
@@ -35,8 +33,9 @@ class ThemeManager:
         self.mm = ModuleManager()
 
         try:
-            generate_json_schemas(self)
-            generate_shell_suggestions(self)
+            schemas.generate_theme_json_schema(self)
+            schemas.generate_module_json_schema()
+            schemas.generate_shell_suggestions(self)
         except Exception as e:
             log.exception(e)
             log.error("failed to generate suggestions")
@@ -63,7 +62,7 @@ class ThemeManager:
     def save_base_style(self, base_style: dict[str, Any]) -> None:
         save_json(BASE_STYLE_FILE, base_style)
         self.base_style = base_style
-        generate_json_schemas(self)
+        schemas.generate_theme_json_schema(self)
 
     @staticmethod
     def get_styles() -> dict[str, Style]:
@@ -192,6 +191,7 @@ class ThemeManager:
 
         dump = tutils.dump_theme_for_file(theme)
         save_json(theme_dir / "theme.json", dump)
+        # save_yaml(theme_dir / "theme.yaml", dump)
 
         parsed_theme = self.parse_theme(THEMES_DIR / theme.name)
 

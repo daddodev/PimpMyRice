@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Tuple
 
 from pydantic import BaseModel, Field, computed_field
+from pydantic.json_schema import SkipJsonSchema
 
 from pimpmyrice import colors as clr
 from pimpmyrice import files
@@ -27,7 +28,7 @@ class ThemeConfig(BaseModel):
 
 
 class Mode(BaseModel):
-    name: str = Field(exclude=True)
+    name: SkipJsonSchema[str] = Field(exclude=True)
     palette: clr.Palette
     wallpaper: Wallpaper
     style: Style = {}
@@ -53,8 +54,8 @@ class Wallpaper(BaseModel):
 
 
 class Theme(BaseModel):
-    path: Path = Field()
-    name: str = Field()
+    path: SkipJsonSchema[Path] = Field(exclude=True)
+    name: SkipJsonSchema[str] = Field(exclude=True)
     wallpaper: Wallpaper
     modes: dict[str, Mode] = {}
     style: Style = {}
@@ -71,7 +72,6 @@ def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
             "modes": {"__all__": {"wallpaper": {"thumb"}}},
         },
     )
-    dump["$schema"] = str(JSON_SCHEMA_DIR / "theme.json")
 
     dump["wallpaper"]["path"] = str(Path(dump["wallpaper"]["path"]).name)
 
