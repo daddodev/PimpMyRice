@@ -37,9 +37,11 @@ T = TypeVar("T", default=None)
 @dataclass
 class Result(Generic[T]):
     value: T | None = None
+    name: str | None = None
     errors: int = 0
     records: list[ResultRecord] = field(default_factory=list)
     time: float = 0
+    ok: bool = False
 
     def __log(self, record: ResultRecord, name: str | None = None) -> None:
         if name:
@@ -117,7 +119,7 @@ class Timer:
 class AttrDict(dict[str, Any]):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.__dict__ = self
-        super(AttrDict, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         for k in self:
             if isinstance(self[k], dict):
@@ -126,14 +128,14 @@ class AttrDict(dict[str, Any]):
     def __setitem__(self, key: Any, value: Any) -> None:
         if isinstance(value, dict):
             value = AttrDict(value)
-        super(AttrDict, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def __add__(self, other: DictOrAttrDict) -> AttrDict:
         def merged(base: AttrDict, to_add: AttrDict) -> AttrDict:
             base = deepcopy(base)
             to_add = deepcopy(to_add)
             for k, v in to_add.items():
-                if isinstance(v, dict) or isinstance(v, AttrDict):
+                if isinstance(v, (dict, AttrDict)):
                     if k in base:
                         base[k] = merged(base[k], to_add[k])
                     else:
@@ -160,8 +162,11 @@ def parse_string_vars(
     theme_dict: dict[str, Any] | None = None,
     module_name: str | None = None,
 ) -> str:
+    # TODO capitalize
+
     d = {"home_dir": HOME_DIR, "config_dir": CONFIG_DIR}
     if module_name:
+        d["module_dir"] = MODULES_DIR / module_name
         d["templates_dir"] = MODULES_DIR / module_name / "templates"
         d["files_dir"] = MODULES_DIR / module_name / "files"
     if not theme_dict:

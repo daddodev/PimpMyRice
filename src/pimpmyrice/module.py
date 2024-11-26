@@ -56,7 +56,7 @@ class ModuleManager:
             log.exception(e)
             log.error(f'failed loading module "{name}": {e}')
 
-    async def run(
+    async def run_modules(
         self,
         theme_dict: AttrDict,
         include_modules: list[str] | None = None,
@@ -74,7 +74,7 @@ class ModuleManager:
 
         with Lock(LOCK_FILE):
             runners = []
-            modifiers = []
+            pre_runners = []
             if include_modules:
                 modules = {
                     name: self.modules[name]
@@ -94,10 +94,10 @@ class ModuleManager:
                 if not module.enabled:
                     continue
 
-                if module.map_modifier:
-                    modifiers.append(name)
+                if module.pre_run_actions:
+                    pre_runners.append(name)
 
-                if module.run:
+                if module.run_actions:
                     runners.append(name)
 
             if len(runners) == 0:
@@ -107,9 +107,10 @@ class ModuleManager:
                 )
                 return res
 
-            for name in modifiers:
+            for name in pre_runners:
                 mod_timer = Timer()
-                mod_res = await mutils.run_module_modifier(name, deepcopy(theme_dict))
+
+                mod_res = await self.modules[name].pre_run(deepcopy(theme_dict))
                 res += mod_res
 
                 if mod_res.value:
@@ -118,17 +119,12 @@ class ModuleManager:
                         f"modifier applied in {mod_timer.elapsed():.2f} seconds", name
                     )
 
-            tasks = [
-                mutils.run_module(
-                    self.modules[name], mutils.gen_module_theme_dict(name, theme_dict)
-                )
-                for name in runners
-            ]
+            tasks = [self.modules[name].run(theme_dict) for name in runners]
 
             for t in asyncio.as_completed(tasks):
                 task_res = await t
                 if isinstance(task_res, Exception):
-                    module_res = mutils.ModuleResult(name="how did this happen")
+                    module_res = Result(name="how did this happen")
                     module_res.exception(task_res)
                 else:
                     module_res = task_res
@@ -136,7 +132,7 @@ class ModuleManager:
                 res += module_res
 
             res.info(
-                f"{len({*modifiers, *runners})} modules applied in {timer.elapsed():.2f} sec"
+                f"{len({*pre_runners, *runners})} modules applied in {timer.elapsed():.2f} sec"
             )
 
             return res
@@ -144,13 +140,16 @@ class ModuleManager:
     async def run_module_command(
         self, tm: ThemeManager, module_name: str, command: str
     ) -> Result:
+        res = Result()
         if module_name not in self.modules:
-            return Result().error(f'module "{module_name}" not found')
+            return res.error(f'module "{module_name}" not found')
 
-        return await mutils.run_module_py_command(tm, name=module_name, command=command)
+        module = self.modules[module_name]
+        res += await module.commands[command].run(tm)
 
-    async def clone(self, source: str | Path) -> Result:
-        # TODO refactor exceptions
+        return res
+
+    async def clone_module(self, source: str | Path) -> Result:
         res = Result()
 
         try:
@@ -166,7 +165,7 @@ class ModuleManager:
                 yaml_path=MODULES_DIR / name / "module.yaml",
             )
 
-            for action in module.run:
+            for action in module.run_actions:
                 if isinstance(action, FileAction):
                     target = Path(parse_string_vars(action.target))
                     if target.exists():
@@ -191,9 +190,8 @@ class ModuleManager:
                     os.symlink(action.template, link_path)
                     res.info(f'linked "{link_path}" to "{action.template}"')
 
-            if module.init:
-                init_res = await mutils.run_module_init(module)
-
+            if module.init_actions:
+                init_res = await module.init()
                 res += init_res
 
             # TODO clean up files
@@ -206,11 +204,7 @@ class ModuleManager:
         except Exception as e:
             return res.exception(e)
 
-    # async def init_module(self, module_name: str) -> Result:
-    #     result = Result()
-    #     return result
-
-    async def delete(self, module_name: str) -> Result:
+    async def delete_module(self, module_name: str) -> Result:
         res = Result()
 
         if module_name not in self.modules:
@@ -219,7 +213,7 @@ class ModuleManager:
         module = self.modules[module_name]
 
         try:
-            await mutils.delete(module)
+            await mutils.delete_module(module)
         except Exception as e:
             res.exception(e)
         else:
@@ -228,7 +222,7 @@ class ModuleManager:
         finally:
             return res
 
-    async def list(self) -> Result:
+    async def list_modules(self) -> Result:
         res = Result()
 
         for module in self.modules:

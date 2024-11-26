@@ -110,10 +110,10 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     elif args["module"]:
         if args["clone"]:
-            return await tm.mm.clone(args["MODULE_URL"])
+            return await tm.mm.clone_module(args["MODULE_URL"])
 
         elif args["delete"]:
-            return await tm.mm.delete(args["MODULE"])
+            return await tm.mm.delete_module(args["MODULE"])
 
         elif args["run"]:
             return await tm.mm.run_module_command(
@@ -148,7 +148,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     elif args["list"]:
         if args["modules"]:
-            return await tm.mm.list()
+            return await tm.mm.list_modules()
         elif args["themes"]:
             return await tm.list_themes()
         elif args["tags"]:

@@ -5,9 +5,9 @@ from pimpmyrice import files
 from pimpmyrice.colors import Palette
 from pimpmyrice.config import CLIENT_OS, MODULES_DIR, Os
 from pimpmyrice.logger import get_logger
-from pimpmyrice.module_utils import (FileAction, IfRunning, InitAction,
-                                     LinkAction, Module, PythonAction,
-                                     RunAction, ShellAction)
+from pimpmyrice.module_utils import (FileAction, IfRunningAction, LinkAction,
+                                     Module, ModuleInit, ModuleRun,
+                                     PythonAction, ShellAction)
 from pimpmyrice.theme_utils import Style, Theme, Wallpaper
 from pimpmyrice.utils import parse_string_vars
 
@@ -56,7 +56,7 @@ def parse_theme(
 
 
 def parse_module(yaml_path: Path) -> Module:
-    name = yaml_path.parent.name
+    module_name = yaml_path.parent.name
     data = files.load_yaml(yaml_path)
 
     supported_os = []
@@ -80,47 +80,72 @@ def parse_module(yaml_path: Path) -> Module:
         enabled = True
     else:
         enabled = False
-        log.warning(f'module "{name}" disabled: not compatible with your OS')
+        log.warning(f'module "{module_name}" disabled: not compatible with your OS')
 
     # it's possible to override os compatibility check
     # using "enabled: true" in module.yaml
     if "enabled" in data:
         if not isinstance(data["enabled"], bool):
-            raise Exception(f'in "{name}": "enabled" must be "true" or "false"')
+            raise Exception(f'in "{module_name}": "enabled" must be "true" or "false"')
         enabled = data["enabled"]
 
-    init: list[InitAction] = []
+    init: list[ModuleInit] = []
     if "init" in data:
         for init_action in data["init"]:
             for action_name, action in init_action.items():
                 match (action_name):
                     case "link":
-                        origin = MODULES_DIR / name / "init_files" / action["what"]
+                        origin = (
+                            MODULES_DIR / module_name / "init_files" / action["what"]
+                        )
                         destination = (
                             Path(parse_string_vars(action["to"])) / action["what"]
                         )
-                        init.append(LinkAction(origin, destination))
+                        init.append(
+                            LinkAction(
+                                module_name=module_name,
+                                origin=origin,
+                                destination=destination,
+                            )
+                        )
                     case _:
                         raise Exception(
-                            f'unknow action "{action_name}" in module "{name}'
+                            f'unknow action "{action_name}" in module "{module_name}'
                         )
 
-    map_modifier = ""
-    if "map_modifier" in data:
-        modifier = data["map_modifier"]
-        if isinstance(modifier, str):
-            map_modifier = modifier
-        else:
-            raise Exception(
-                f'in "{name}": "map_modifier" must be a string representing "file.function"'
-            )
+    pre_run = []
+    if "pre_run" in data:
+        for pre_run_action in data["pre_run"]:
+            for action, content in pre_run_action.items():
+                match action:
+                    case "python":
+                        match content:
+                            case str(content):
+                                filename, fn_name = content.split(":")
+                                pre_run.append(
+                                    PythonAction(
+                                        module_name=module_name,
+                                        py_file_path=MODULES_DIR
+                                        / module_name
+                                        / filename,
+                                        function_name=fn_name,
+                                    )
+                                )
+                            case _:
+                                raise Exception(
+                                    '"python:" must be a string indicating "file:function"'
+                                )
+                    case _:
+                        raise Exception(
+                            f'Unknown pre_run action {action}. Must be one of: "python".'
+                        )
 
-    run: list[RunAction] = []
+    run: list[ModuleRun] = []
     if "run" in data:
         for run_action in data["run"]:
             if not isinstance(run_action, dict):
                 raise Exception(
-                    f'in "{name}": "run" must be a list of "action: content"'
+                    f'in "{module_name}": "run" must be a list of "action: content"'
                 )
 
             for action, content in run_action.items():
@@ -131,12 +156,20 @@ def parse_module(yaml_path: Path) -> Module:
                             content = content[1:]
                         else:
                             should_be_running = True
-                        run.append(IfRunning(content, should_be_running))
+                        run.append(
+                            IfRunningAction(
+                                module_name=module_name,
+                                program_name=content,
+                                should_be_running=should_be_running,
+                            )
+                        )
 
                     case "shell":
                         if not isinstance(content, str):
                             raise Exception('"shell" action value must be a string')
-                        run.append(ShellAction(command=content))
+                        run.append(
+                            ShellAction(module_name=module_name, command=content)
+                        )
 
                     case "file":
                         match content:
@@ -151,8 +184,12 @@ def parse_module(yaml_path: Path) -> Module:
                                 )
                         run.append(
                             FileAction(
+                                module_name=module_name,
                                 template=str(
-                                    MODULES_DIR / name / "templates" / template_name
+                                    MODULES_DIR
+                                    / module_name
+                                    / "templates"
+                                    / template_name
                                 ),
                                 target=target,
                             )
@@ -161,7 +198,16 @@ def parse_module(yaml_path: Path) -> Module:
                     case "python":
                         match content:
                             case str(content):
-                                run.append(PythonAction(function=content))
+                                filename, fn_name = content.split(":")
+                                run.append(
+                                    PythonAction(
+                                        module_name=module_name,
+                                        py_file_path=MODULES_DIR
+                                        / module_name
+                                        / filename,
+                                        function_name=fn_name,
+                                    )
+                                )
                             case _:
                                 raise Exception(
                                     '"python:" must be a string indicating "file.function"'
@@ -169,16 +215,16 @@ def parse_module(yaml_path: Path) -> Module:
 
                     case _:
                         raise Exception(
-                            f'Unknown action {action}. Must be one of: "shell", "file", "python", "if_running".'
+                            f'Unknown run action "{action}". Must be one of: "shell", "file", "python", "if_running".'
                         )
 
     module = Module(
-        name=name,
-        map_modifier=map_modifier,
-        run=run,
+        name=module_name,
+        pre_run_actions=pre_run,
+        run_actions=run,
         enabled=enabled,
         os=supported_os,
-        init=init,
+        init_actions=init,
     )
 
     return module

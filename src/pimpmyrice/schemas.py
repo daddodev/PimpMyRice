@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
@@ -65,7 +66,7 @@ def generate_json_schemas(tm: ThemeManager) -> Result:
                 {"type": "string"},
                 {
                     "const": "",
-                    "enum": [t for t in tm.tags],
+                    "enum": list(tm.tags),
                     "type": "string",
                 },
             ]
@@ -102,7 +103,7 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
 
     doc = cli_doc.replace("THEME", f'({"|".join(tm.themes.keys())})')
     doc = doc.replace("TAGS", f'({"|".join(tm.tags)})')
-    doc = doc.replace(r"\bMODULE\b", f'({"|".join(tm.mm.modules.keys())})')
+    doc = re.sub(r"\bMODULES?\b", f'({"|".join(tm.mm.modules.keys())})', doc)
 
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(printable_usage(doc)), options)

@@ -328,7 +328,9 @@ class ThemeManager:
 
         res.info(f'applying theme "{theme.name}"...')
 
-        modules_res = await self.mm.run(theme_dict, include_modules, exclude_modules)
+        modules_res = await self.mm.run_modules(
+            theme_dict, include_modules, exclude_modules
+        )
 
         res += modules_res
 

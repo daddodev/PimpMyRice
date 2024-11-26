@@ -18,7 +18,7 @@ from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
 log = get_logger(__name__)
 
 
-type Style = dict[str, Any]
+Style = dict[str, Any]
 
 
 class ThemeConfig(BaseModel):
@@ -75,7 +75,7 @@ def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
 
     dump["wallpaper"]["path"] = str(Path(dump["wallpaper"]["path"]).name)
 
-    for mode_name, mode in dump["modes"].items():
+    for mode in dump["modes"].values():
         mode["wallpaper"]["path"] = str(Path(mode["wallpaper"]["path"]).name)
 
     # print("dump for file:", json.dumps(dump, indent=4))
