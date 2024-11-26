@@ -75,6 +75,9 @@ def parse_module(module_path: Path) -> Result[Module]:
                 if isinstance(action, dict):
                     action["module_name"] = module_name
 
+        for cmd_name, cmd in data.get("commands", {}).items():
+            cmd["module_name"] = module_name
+
         module = Module(**data, name=module_name)
 
         res.value = module

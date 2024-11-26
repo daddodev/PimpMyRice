@@ -279,6 +279,27 @@ class Module(BaseModel):
     run: list[ModuleRun] = []
     commands: dict[str, ModuleCommand] = {}
 
+    async def execute_command(self, command_name: str, tm: ThemeManager) -> Result:
+        res = Result()
+
+        if command_name not in self.commands:
+            return res.error(
+                f'command "{command_name}" not found in [{", ".join(self.commands.keys())}]'
+            )
+
+        try:
+            action_res = await self.commands[command_name].run(tm=tm)
+            res += action_res
+            if not action_res.ok:
+                return res
+
+        except Exception as e:
+            return res.exception(
+                e, f'command "{command_name}" encountered an error:', self.name
+            )
+
+        return res
+
     async def execute_init(self) -> Result:
         res = Result()
 

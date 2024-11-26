@@ -130,7 +130,7 @@ class ModuleManager:
             return res.error(f'module "{module_name}" not found')
 
         module = self.modules[module_name]
-        res += await module.commands[command].run(tm)
+        res += await module.execute_command(command, tm)
 
         return res
 
