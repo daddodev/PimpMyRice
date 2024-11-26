@@ -119,20 +119,27 @@ def exp_extract_colors(img: Path) -> list[tuple[tuple[int, float, float], int]]:
         counts = Counter(color_labels)
         ordered_colors = [center_colors[i] for i in counts.keys()]
 
-        color_objects = [
-            (
-                Color(tuple(ordered_colors[i])).hsv,
-                c // 1000,
+        color_objects: list[tuple[Any, int]] = []
+        for i, count in counts.items():
+            b, g, r = ordered_colors[i]
+            c = tuple(
+                Color(
+                    (
+                        int(r),
+                        int(g),
+                        int(b),
+                    )
+                ).hsv,
             )
-            for i, c in counts.items()
-        ]
+
+            color_objects.append((c, count // 100))
 
         color_objects.sort(key=lambda x: x[1], reverse=True)
 
         return color_objects
 
     image = cv2.imread(str(img))
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     modified_image = preprocess(image)
     colors = analyze(modified_image)
