@@ -23,6 +23,7 @@ Usage:
     pimp toggle mode [options]
     pimp clone module MODULE_URL [options]
     pimp delete module MODULE [options]
+    pimp reinit module MODULE [options]
     pimp run module MODULE COMMAND [COMMAND_ARGS...] [options]
     pimp list (themes|tags|styles|palettes|keywords|modules) [options]
     pimp edit theme [THEME] [options]

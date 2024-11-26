@@ -120,6 +120,9 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
                 tm, module_name=args["MODULE"], command=args["COMMAND"]
             )
 
+        elif args["reinit"]:
+            return await tm.mm.init_module(module_name=args["MODULE"])
+
     elif args["toggle"]:
         return await tm.toggle_mode()
 

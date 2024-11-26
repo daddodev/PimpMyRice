@@ -27,35 +27,19 @@ class ModuleManager:
         self.modules = self.get_modules()
 
     def get_modules(self) -> dict[str, Module]:
-        modules = {}
+        modules: dict[str, Module] = {}
         timer = Timer()
 
         for module_dir in MODULES_DIR.iterdir():
-            module_yaml = module_dir / "module.yaml"
-            if not module_yaml.exists():
-                continue
-            try:
-                module = parse_module(yaml_path=module_yaml)
-                modules[module.name] = module
-            except Exception as e:
-                log.exception(e)
-                log.error(f'failed loading module "{module_dir.name}": {e}')
+            parse_res = parse_module(module_dir)
+
+            if parse_res.value:
+                modules[parse_res.value.name] = parse_res.value
+                log.debug(f'module "{parse_res.value.name}" loaded')
 
         log.debug(f"{len(modules)} modules loaded in {timer.elapsed():.4f} sec")
 
         return modules
-
-    def load_module(self, name: str) -> None:
-        module_yaml = MODULES_DIR / name / "module.yaml"
-        if not module_yaml.exists():
-            return
-        try:
-            module = parse_module(yaml_path=module_yaml)
-            self.modules[module.name] = module
-            log.info(f'module "{module.name}" loaded')
-        except Exception as e:
-            log.exception(e)
-            log.error(f'failed loading module "{name}": {e}')
 
     async def run_modules(
         self,
@@ -162,11 +146,47 @@ class ModuleManager:
 
             try:
                 dump = module.model_dump(mode="json")
-                # save_yaml(MODULES_DIR / module.name / "module.yaml", dump)
-                save_json(MODULES_DIR / module.name / "module.json", dump)
+
+                edited = {}
+                for group_name, group in dump.items():
+                    if group_name == "run":
+                        for action in group:
+                            if "template" in action:
+                                if len(Path(action["template"]).parts) > 1:
+                                    continue
+
+                                template_path = Path(action["template"]).name
+                                target_stem = Path(action["target"]).name
+                                if target_stem + ".j2" == template_path:
+                                    action.pop("template")
+
+                    elif isinstance(group, (dict, list)) and len(group) == 0:
+                        continue
+                    elif (
+                        isinstance(group, bool)
+                        and group_name == "enabled"
+                        and group == True
+                    ):
+                        continue
+                    edited[group_name] = group
+
+                save_yaml(MODULES_DIR / module.name / "module.yaml", edited)
+                # save_json(MODULES_DIR / module.name / "module.json", edited)
                 res.success(f'module "{module.name}" rewritten')
             except Exception as e:
                 res.exception(e)
+        return res
+
+    async def init_module(self, module_name: str) -> Result:
+        res = Result()
+
+        if not module_name in self.modules:
+            return res.error(f'module "{module_name}" not found')
+
+        module = self.modules[module_name]
+        init_res = await module.execute_init()
+        res += init_res
+
         return res
 
     async def clone_module(self, source: str | Path) -> Result:
@@ -181,9 +201,12 @@ class ModuleManager:
             else:
                 name = await mutils.clone_from_git(source)
 
-            module = parse_module(
-                yaml_path=MODULES_DIR / name / "module.yaml",
-            )
+            parse_res = parse_module(MODULES_DIR / name)
+            res += parse_res
+            if parse_res.value:
+                module = parse_res.value
+            else:
+                return res
 
             for action in module.run:
                 if isinstance(action, FileAction):

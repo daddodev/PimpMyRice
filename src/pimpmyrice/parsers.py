@@ -9,7 +9,7 @@ from pimpmyrice.module_utils import (FileAction, IfRunningAction, LinkAction,
                                      Module, ModuleInit, ModuleRun,
                                      PythonAction, ShellAction)
 from pimpmyrice.theme_utils import Style, Theme, Wallpaper
-from pimpmyrice.utils import parse_string_vars
+from pimpmyrice.utils import Result, parse_string_vars
 
 log = get_logger(__name__)
 
@@ -55,176 +55,32 @@ def parse_theme(
     return theme
 
 
-def parse_module(yaml_path: Path) -> Module:
-    module_name = yaml_path.parent.name
-    data = files.load_yaml(yaml_path)
+def parse_module(module_path: Path) -> Result[Module]:
+    res: Result[Module] = Result()
 
-    supported_os = []
-    if "os" in data:
-        os_data = data["os"]
-        match os_data:
-            case list():
-                for os in [o.upper() for o in os_data]:
-                    if os in [o.name for o in Os]:
-                        supported_os.append(Os[os])
-                    else:
-                        log.debug(f"unknown os {os}")
-            case str():
-                supported_os.append(Os[os_data.upper()])
-            case _:
-                log.error('"os" must be a string or a list')
-    if len(supported_os) == 0:
-        supported_os = [o for o in Os]
-        enabled = True
-    elif CLIENT_OS in supported_os:
-        enabled = True
-    else:
-        enabled = False
-        log.warning(f'module "{module_name}" disabled: not compatible with your OS')
+    module_name = module_path.name
+    module_yaml = module_path / "module.yaml"
+    module_json = module_path / "module.json"
 
-    # it's possible to override os compatibility check
-    # using "enabled: true" in module.yaml
-    if "enabled" in data:
-        if not isinstance(data["enabled"], bool):
-            raise Exception(f'in "{module_name}": "enabled" must be "true" or "false"')
-        enabled = data["enabled"]
+    try:
+        if module_yaml.exists():
+            data = files.load_yaml(module_yaml)
+        elif module_json.exists():
+            data = files.load_json(module_json)
+        else:
+            return res
 
-    init: list[ModuleInit] = []
-    if "init" in data:
-        for init_action in data["init"]:
-            for action_name, action in init_action.items():
-                match (action_name):
-                    case "link":
-                        origin = (
-                            MODULES_DIR / module_name / "init_files" / action["what"]
-                        )
-                        destination = (
-                            Path(parse_string_vars(action["to"])) / action["what"]
-                        )
-                        init.append(
-                            LinkAction(
-                                module_name=module_name,
-                                origin=origin,
-                                destination=destination,
-                            )
-                        )
-                    case _:
-                        raise Exception(
-                            f'unknow action "{action_name}" in module "{module_name}'
-                        )
+        for param in ["init", "pre_run", "run"]:
+            for action in data.get(param, []):
+                if isinstance(action, dict):
+                    action["module_name"] = module_name
 
-    pre_run = []
-    if "pre_run" in data:
-        for pre_run_action in data["pre_run"]:
-            for action, content in pre_run_action.items():
-                match action:
-                    case "python":
-                        match content:
-                            case str(content):
-                                filename, fn_name = content.split(":")
-                                pre_run.append(
-                                    PythonAction(
-                                        module_name=module_name,
-                                        py_file_path=MODULES_DIR
-                                        / module_name
-                                        / filename,
-                                        function_name=fn_name,
-                                    )
-                                )
-                            case _:
-                                raise Exception(
-                                    '"python:" must be a string indicating "file:function"'
-                                )
-                    case _:
-                        raise Exception(
-                            f'Unknown pre_run action {action}. Must be one of: "python".'
-                        )
+        module = Module(**data, name=module_name)
 
-    run: list[ModuleRun] = []
-    if "run" in data:
-        for run_action in data["run"]:
-            if not isinstance(run_action, dict):
-                raise Exception(
-                    f'in "{module_name}": "run" must be a list of "action: content"'
-                )
+        res.value = module
+        return res
 
-            for action, content in run_action.items():
-                match action:
-                    case "if_running":
-                        if content[0] == "!":
-                            should_be_running = False
-                            content = content[1:]
-                        else:
-                            should_be_running = True
-                        run.append(
-                            IfRunningAction(
-                                module_name=module_name,
-                                program_name=content,
-                                should_be_running=should_be_running,
-                            )
-                        )
-
-                    case "shell":
-                        if not isinstance(content, str):
-                            raise Exception('"shell" action value must be a string')
-                        run.append(
-                            ShellAction(module_name=module_name, command=content)
-                        )
-
-                    case "file":
-                        match content:
-                            case str(content):
-                                target = content
-                                template_name = f"{Path(target).name}.j2"
-                            case dict(content):
-                                template_name, target = next(iter(content.items()))
-                            case _:
-                                raise Exception(
-                                    '"file:" must be either a string or a dict'
-                                )
-                        run.append(
-                            FileAction(
-                                module_name=module_name,
-                                template=str(
-                                    MODULES_DIR
-                                    / module_name
-                                    / "templates"
-                                    / template_name
-                                ),
-                                target=target,
-                            )
-                        )
-
-                    case "python":
-                        match content:
-                            case str(content):
-                                filename, fn_name = content.split(":")
-                                run.append(
-                                    PythonAction(
-                                        module_name=module_name,
-                                        py_file_path=MODULES_DIR
-                                        / module_name
-                                        / filename,
-                                        function_name=fn_name,
-                                    )
-                                )
-                            case _:
-                                raise Exception(
-                                    '"python:" must be a string indicating "file.function"'
-                                )
-
-                    case _:
-                        raise Exception(
-                            f'Unknown run action "{action}". Must be one of: "shell", "file", "python", "if_running".'
-                        )
-
-    module = Module(
-        name=module_name,
-        init=init,
-        pre_run=pre_run,
-        run=run,
-        enabled=enabled,
-        os=supported_os,
-    )
-
-    return module
+    except Exception as e:
+        res.exception(e)
+        res.error(f'failed loading module in "{module_path}": {e}')
+        return res

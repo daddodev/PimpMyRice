@@ -15,7 +15,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, Literal, Union
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
 from pydantic.json_schema import (JsonDict, JsonSchemaExtraCallable,
                                   SkipJsonSchema)
 from typing_extensions import Annotated
@@ -23,7 +23,7 @@ from typing_extensions import Annotated
 from pimpmyrice import files, utils
 from pimpmyrice.config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
 from pimpmyrice.logger import get_logger
-from pimpmyrice.utils import AttrDict, Result, Timer
+from pimpmyrice.utils import AttrDict, Result, Timer, parse_string_vars
 
 if TYPE_CHECKING:
     from pimpmyrice.theme import ThemeManager
@@ -85,12 +85,20 @@ class ShellAction(BaseModel):
 class FileAction(BaseModel):
     action: Literal["file"] = Field(default="file")
     module_name: SkipJsonSchema[str] = Field(exclude=True)
-    template: str
     target: str
+    template: str = ""
 
     model_config = ConfigDict(
         json_schema_extra=partial(add_action_type_to_schema, "file")
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_fields(cls, data: Any) -> Any:
+        if "target" in data and "template" not in data:
+            template_path = f'{Path(data["target"]).name}.j2'
+            data["template"] = template_path
+        return data
 
     async def run(self, theme_dict: AttrDict) -> Result:
         res = Result()
@@ -98,7 +106,9 @@ class FileAction(BaseModel):
         try:
             template = Path(
                 utils.parse_string_vars(
-                    string=self.template,
+                    string=str(
+                        MODULES_DIR / self.module_name / "templates" / self.template
+                    ),
                     module_name=self.module_name,
                     theme_dict=theme_dict,
                 )
@@ -135,7 +145,7 @@ class FileAction(BaseModel):
 class PythonAction(BaseModel):
     action: Literal["python"] = Field(default="python")
     module_name: SkipJsonSchema[str] = Field(exclude=True)
-    py_file_path: Path
+    py_file_path: str
     function_name: str
 
     model_config = ConfigDict(
@@ -143,21 +153,24 @@ class PythonAction(BaseModel):
     )
 
     async def run(self, *args: Any, **kwargs: Any) -> Result[Any]:
+        file_path = Path(self.py_file_path)
+
+        if not file_path.is_absolute():
+            file_path = MODULES_DIR / self.module_name / file_path
+
         res = Result()
 
         try:
-            spec = importlib.util.spec_from_file_location(
-                self.module_name, self.py_file_path
-            )
+            spec = importlib.util.spec_from_file_location(self.module_name, file_path)
             if not spec or not spec.loader:
-                raise ImportError(f'could not load "{self.py_file_path}"')
+                raise ImportError(f'could not load "{file_path}"')
             py_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(py_module)
 
             fn = getattr(py_module, self.function_name)
 
             res.debug(
-                f"{self.py_file_path.name}:{self.function_name} loaded",
+                f"{file_path.name}:{self.function_name} loaded",
                 self.module_name,
             )
 
@@ -167,7 +180,7 @@ class PythonAction(BaseModel):
                 res.value = fn(*args, **kwargs)
 
             res.debug(
-                f"{self.py_file_path.name}:{self.function_name} returned:\n{res.value}",
+                f"{file_path.name}:{self.function_name} returned:\n{res.value}",
                 self.module_name,
             )
             res.ok = True
@@ -209,8 +222,8 @@ class IfRunningAction(BaseModel):
 class LinkAction(BaseModel):
     action: Literal["link"] = Field(default="link")
     module_name: SkipJsonSchema[str] = Field(exclude=True)
-    origin: Path
-    destination: Path
+    origin: str
+    destination: str
 
     model_config = ConfigDict(
         json_schema_extra=partial(add_action_type_to_schema, "link")
@@ -219,20 +232,27 @@ class LinkAction(BaseModel):
     async def run(self) -> Result:
         res = Result()
 
-        try:
-            if self.destination.exists():
-                return res.error(
-                    f'cannot link "{self.destination}" to "{self.origin}", destination already exists'
-                )
+        origin_path = Path(parse_string_vars(self.origin, module_name=self.module_name))
+        destination_path = Path(
+            parse_string_vars(self.destination, module_name=self.module_name)
+        )
 
-            self.destination.parent.mkdir(parents=True, exist_ok=True)
+        if not origin_path.is_absolute():
+            origin_path = MODULES_DIR / self.module_name / "files" / origin_path
+
+        if destination_path.exists():
+            return res.error(
+                f'cannot link destination "{destination_path}" to origin "{origin_path}", destination already exists'
+            )
+        try:
+            destination_path.parent.mkdir(parents=True, exist_ok=True)
             os.symlink(
-                self.origin,
-                self.destination,
-                target_is_directory=True,
+                origin_path,
+                destination_path,
+                target_is_directory=origin_path.is_dir(),
             )
             # action.destination.hardlink_to(action.origin)
-            res.debug(f'init: "{self.destination}" linked to "{self.origin}"')
+            res.info(f'init: "{destination_path}" linked to "{origin_path}"')
             res.ok = True
         except Exception as e:
             res.exception(e, self.module_name)
@@ -295,6 +315,7 @@ class Module(BaseModel):
         res = Result(name=self.name)
         timer = Timer()
 
+        # get_module_dict
         theme_dict = (
             theme_dict + theme_dict["modules_styles"][self.name]
             if self.name in theme_dict["modules_styles"]
