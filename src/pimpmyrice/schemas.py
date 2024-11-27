@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Generator
 
 from docopt import formal_usage, parse_defaults, parse_pattern, printable_usage
 from infi.docopt_completion.common import (CommandParams, build_command_tree,
@@ -14,12 +14,15 @@ from pydantic import BaseModel, create_model
 from pimpmyrice.config import JSON_SCHEMA_DIR
 from pimpmyrice.doc import __doc__ as cli_doc
 from pimpmyrice.files import save_json
+from pimpmyrice.logger import get_logger
 from pimpmyrice.module_utils import Module
 from pimpmyrice.theme_utils import Theme
 from pimpmyrice.utils import Result
 
 if TYPE_CHECKING:
     from pimpmyrice.theme import ThemeManager
+
+log = get_logger(__name__)
 
 
 def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
@@ -79,6 +82,11 @@ def generate_theme_json_schema(tm: ThemeManager) -> Result:
 
     theme_schema["properties"]["style"] = {"$ref": "#/$defs/Style"}
 
+    theme_schema["properties"].pop("name")
+    theme_schema["properties"].pop("path")
+    theme_schema["required"].remove("name")
+    theme_schema["required"].remove("path")
+
     schema_path = JSON_SCHEMA_DIR / "theme.json"
     save_json(schema_path, theme_schema)
 
@@ -113,4 +121,26 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
 
     generators_to_use = _autodetect_generators()
     for generator in generators_to_use:
-        generator.generate(os.path.basename("pimp"), param_tree, option_help)
+        completion_file_content = generator.get_completion_file_content(
+            "pimp", param_tree, option_help
+        )
+        file_paths = generator.get_completion_filepath("pimp")
+        if not isinstance(file_paths, Generator):
+            file_paths = [file_paths]
+        for file_path in file_paths:
+            if not os.access(os.path.dirname(file_path), os.W_OK):
+                log.debug(
+                    "Skipping file {file_path}, no permissions".format(
+                        file_path=file_path
+                    )
+                )
+                return
+            try:
+                with open(file_path, "w") as fd:
+                    fd.write(completion_file_content)
+            except IOError:
+                log.debug("Failed to write {file_path}".format(file_path=file_path))
+                return
+            log.debug(
+                "Completion file written to {file_path}".format(file_path=file_path)
+            )

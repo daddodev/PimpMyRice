@@ -3,7 +3,7 @@ from __future__ import annotations
 import colorsys
 from collections import Counter
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any, Literal, Tuple
 
 import cv2
 from pydantic import BaseModel, Field
@@ -80,20 +80,44 @@ class Color(PydanticColor):
         return self.hex
 
 
+class TermColors(BaseModel):
+    color0: Color
+    color1: Color
+    color2: Color
+    color3: Color
+    color4: Color
+    color5: Color
+    color6: Color
+    color7: Color
+    color8: Color
+    color9: Color
+    color10: Color
+    color11: Color
+    color12: Color
+    color13: Color
+    color14: Color
+    color15: Color
+
+
+class BgFgColors(BaseModel):
+    bg: Color
+    fg: Color
+
+
 class Palette(BaseModel):
     name: SkipJsonSchema[str | None] = Field(default=None, exclude=True)
     path: SkipJsonSchema[Path | None] = Field(default=None, exclude=True)
-    term: dict[str, Color] | None = None
-    normal: dict[str, Color] | None = None
-    panel: dict[str, Color] | None = None
-    dialog: dict[str, Color] | None = None
-    input: dict[str, Color] | None = None
-    border: dict[str, Color] | None = None
-    muted: dict[str, Color] | None = None
-    primary: dict[str, Color] | None = None
-    secondary: dict[str, Color] | None = None
-    accent: dict[str, Color] | None = None
-    destructive: dict[str, Color] | None = None
+    term: TermColors
+    normal: BgFgColors
+    panel: BgFgColors
+    dialog: BgFgColors
+    input: BgFgColors
+    muted: BgFgColors
+    primary: BgFgColors
+    secondary: BgFgColors
+    accent: BgFgColors
+    destructive: BgFgColors
+    border: dict[Literal["active"] | Literal["inactive"], Color]
 
 
 def get_palettes() -> dict[str, Palette]:
