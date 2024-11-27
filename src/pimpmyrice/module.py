@@ -194,63 +194,72 @@ class ModuleManager:
 
         return res
 
-    async def clone_module(self, source: str | Path) -> Result:
+    async def clone_module(self, source: str | Path | list[str | Path]) -> Result:
         res = Result()
 
-        try:
-            if isinstance(source, Path):
-                name = await mutils.clone_from_folder(source)
-            elif source.startswith("pimp://"):
-                url = f"{REPOS_BASE_ADDR}/{source.removeprefix("pimp://")}"
-                name = await mutils.clone_from_git(url)
-            else:
-                name = await mutils.clone_from_git(source)
+        sources = source if isinstance(source, list) else [source]
 
-            parse_res = parse_module(MODULES_DIR / name)
-            res += parse_res
-            if parse_res.value:
-                module = parse_res.value
-            else:
-                return res
+        for source in sources:
+            try:
+                if isinstance(source, Path):
+                    name = await mutils.clone_from_folder(source)
+                elif source.startswith("pimp://"):
+                    url = f"{REPOS_BASE_ADDR}/{source.removeprefix("pimp://")}"
+                    name = await mutils.clone_from_git(url)
+                else:
+                    name = await mutils.clone_from_git(source)
 
-            for action in module.run:
-                if isinstance(action, FileAction):
-                    target = Path(parse_string_vars(action.target))
-                    if target.exists():
-                        copy_path = f"{target}.bkp"
-                        try:
-                            shutil.copyfile(target, copy_path)
-                            res.info(f'"{target.name}" copied to "{target.name}.bkp"')
-                        except Exception as e:
-                            res.exception(
-                                e, f'could not copy "{target}" to "{target}.bkp"'
+                parse_res = parse_module(MODULES_DIR / name)
+                res += parse_res
+                if parse_res.value:
+                    module = parse_res.value
+                else:
+                    continue
+
+                for action in module.run:
+                    if isinstance(action, FileAction):
+                        target = Path(parse_string_vars(action.target))
+                        if target.exists():
+                            copy_path = f"{target}.bkp"
+                            try:
+                                shutil.copyfile(target, copy_path)
+                                res.info(
+                                    f'"{target.name}" copied to "{target.name}.bkp"'
+                                )
+                            except Exception as e:
+                                res.exception(
+                                    e, f'could not copy "{target}" to "{target}.bkp"'
+                                )
+
+                        link_path = Path(str(target) + ".j2")
+                        if link_path.exists():
+                            res.info(
+                                f'skipping linking "{link_path}" to "{action.template}", destination already exists'
                             )
+                            continue
+                        else:
+                            link_path.parent.mkdir(exist_ok=True)
 
-                    link_path = Path(str(target) + ".j2")
-                    if link_path.exists():
-                        res.info(
-                            f'skipping linking "{link_path}" to "{action.template}", destination already exists'
-                        )
-                        continue
-                    else:
-                        link_path.parent.mkdir(exist_ok=True)
+                        os.symlink(action.template, link_path)
+                        res.info(f'linked "{link_path}" to "{action.template}"')
 
-                    os.symlink(action.template, link_path)
-                    res.info(f'linked "{link_path}" to "{action.template}"')
+                if module.init:
+                    init_res = await module.execute_init()
+                    res += init_res
 
-            if module.init:
-                init_res = await module.execute_init()
-                res += init_res
+                # TODO clean up files
+                if res.errors:
+                    res.error("failed cloning module")
+                    continue
 
-            # TODO clean up files
-            if res.errors:
-                return res.error("failed cloning module")
+                self.modules[name] = module
+                res.success(f"module {name} cloned")
 
-            self.modules[name] = module
-            return res.success(f"module {name} cloned")
+            except Exception as e:
+                res.exception(e)
+                continue
 
-        except Exception as e:
-            return res.exception(e)
+        return res
 
     async def delete_module(self, module_name: str) -> Result:
         res = Result()

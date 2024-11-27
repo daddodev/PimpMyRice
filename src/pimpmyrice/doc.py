@@ -21,7 +21,7 @@ Usage:
     pimp delete theme THEME [options]
     pimp rename theme THEME NEW_NAME [options]
     pimp toggle mode [options]
-    pimp clone module MODULE_URL [options]
+    pimp clone module MODULE_URL... [options]
     pimp delete module MODULE [options]
     pimp reinit module MODULE [options]
     pimp run module MODULE COMMAND [COMMAND_ARGS...] [options]

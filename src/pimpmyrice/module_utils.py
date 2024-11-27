@@ -16,8 +16,7 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
-from pydantic.json_schema import (JsonDict, JsonSchemaExtraCallable,
-                                  SkipJsonSchema)
+from pydantic.json_schema import JsonDict, SkipJsonSchema
 from typing_extensions import Annotated
 
 from pimpmyrice import files, utils
