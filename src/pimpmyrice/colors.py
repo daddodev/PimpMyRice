@@ -20,6 +20,7 @@ log = get_logger(__name__)
 
 
 class Color(PydanticColor):
+
     @property
     def alt(self) -> Color:
         h, s, v = colorsys.rgb_to_hsv(*[x / 255 for x in self.as_rgb_tuple()])
@@ -42,11 +43,19 @@ class Color(PydanticColor):
 
     @property
     def hex(self) -> str:
-        return self.as_hex()
+        hex = self.as_hex()
+        long_hex = "#"
+        if len(hex) == 4:
+            for v in hex[1:]:
+                long_hex += v * 2
+        else:
+            long_hex = hex
+
+        return long_hex
 
     @property
     def nohash(self) -> str:
-        hex = self.as_hex()
+        hex = self.hex
         clr = hex[1:]
         return clr
 
@@ -66,6 +75,9 @@ class Color(PydanticColor):
     def rgb(self) -> str:
         clr = self.as_rgb()
         return clr
+
+    def __str__(self) -> str:
+        return self.hex
 
 
 class Palette(BaseModel):
