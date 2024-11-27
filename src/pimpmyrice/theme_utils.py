@@ -54,8 +54,8 @@ class Wallpaper(BaseModel):
 
 
 class Theme(BaseModel):
-    path: SkipJsonSchema[Path] = Field(exclude=True)
-    name: SkipJsonSchema[str] = Field(exclude=True)
+    path: Path = Field()
+    name: str = Field()
     wallpaper: Wallpaper
     modes: dict[str, Mode] = {}
     style: Style = {}

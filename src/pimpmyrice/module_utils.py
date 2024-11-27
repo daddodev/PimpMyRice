@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
-from pydantic.json_schema import JsonDict, SkipJsonSchema
+from pydantic.json_schema import SkipJsonSchema
 from typing_extensions import Annotated
 
 from pimpmyrice import files, utils
@@ -32,14 +32,14 @@ log = get_logger(__name__)
 
 def add_action_type_to_schema(
     action_type: str,
-    schema: JsonDict,
+    schema: dict[str, Any],
 ) -> None:
-    schema["properties"]["action"] = {  # type: ignore
+    schema["properties"]["action"] = {
         "title": "Action type",
         "type": "string",
         "const": action_type,
     }
-    schema["required"].append("action")  # type: ignore
+    schema["required"].append("action")
 
 
 class ShellAction(BaseModel):
