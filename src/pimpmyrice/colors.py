@@ -5,14 +5,12 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Literal, Tuple
 
-import cv2
 from pydantic import BaseModel, Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import PydanticCustomError
 from pydantic_extra_types.color import RGBA
 from pydantic_extra_types.color import Color as PydanticColor
 from pydantic_extra_types.color import ColorType, parse_str, parse_tuple
-from sklearn.cluster import KMeans
 
 from pimpmyrice import files
 from pimpmyrice.config import PALETTES_DIR
@@ -81,7 +79,7 @@ class Color(PydanticColor):
     @property
     def hex(self) -> str:
         rgb = tuple(f"{hex(int(x))[2:] :0>2}" for x in self.as_rgb_tuple())
-        hex_string = "#"+"".join(rgb)
+        hex_string = "#" + "".join(rgb)
 
         return hex_string
 
@@ -175,6 +173,9 @@ def palette_display_string(colors: Any) -> str:
 
 
 def exp_extract_colors(img: Path) -> list[tuple[tuple[int, float, float], int]]:
+    import cv2
+    from sklearn.cluster import KMeans
+
     def preprocess(raw: Any) -> Any:
         image = cv2.resize(raw, (600, 600), interpolation=cv2.INTER_AREA)
         image = image.reshape(image.shape[0] * image.shape[1], 3)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -361,22 +362,25 @@ class Module(BaseModel):
         return res
 
 
+def run_shell_command_detached(command: str, cwd: Path | None = None) -> None:
+    if sys.platform == "win32":
+        subprocess.Popen(
+            shlex.split(command),
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+        return
+
+    subprocess.Popen(
+        shlex.split(command),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        preexec_fn=os.setpgrp,
+    )
+
+
 async def run_shell_command(command: str, cwd: Path | None = None) -> tuple[str, str]:
     if command.endswith("&"):
-        detached = True
-        command = command[:-1].strip()
-    else:
-        detached = False
-
-    if detached:
-        subprocess.Popen(
-            command,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            cwd=cwd,
-            start_new_session=True,
-            shell=True,
-        )
+        run_shell_command_detached(command[:-1].strip(), cwd)
         return f'command "{command}" started in background', ""
 
     proc = await asyncio.create_subprocess_shell(
@@ -386,7 +390,6 @@ async def run_shell_command(command: str, cwd: Path | None = None) -> tuple[str,
         cwd=cwd,
     )
     out, err = await proc.communicate()
-    # print(f"{out.decode()=}\n{err.decode()=}")
     return out.decode(), err.decode()
 
 
