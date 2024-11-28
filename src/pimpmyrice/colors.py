@@ -135,8 +135,6 @@ class BgFgColors(BaseModel):
 
 
 class Palette(BaseModel):
-    name: SkipJsonSchema[str | None] = Field(default=None, exclude=True)
-    path: SkipJsonSchema[Path | None] = Field(default=None, exclude=True)
     term: TermColors
     normal: BgFgColors
     panel: BgFgColors
@@ -150,12 +148,21 @@ class Palette(BaseModel):
     border: dict[Literal["active"] | Literal["inactive"], Color]
 
 
-def get_palettes() -> dict[str, Palette]:
+class LinkPalette(BaseModel):
+    from_global: str
+
+
+class GlobalPalette(Palette):
+    name: str
+    path: SkipJsonSchema[Path | None] = Field(default=None, exclude=True)
+
+
+def get_palettes() -> dict[str, GlobalPalette]:
     palettes = {}
     for file in PALETTES_DIR.iterdir():
         try:
             palette = files.load_json(file)
-            palettes[file.stem] = Palette(name=file.stem, path=file, **palette)
+            palettes[file.stem] = GlobalPalette(name=file.stem, path=file, **palette)
         except Exception as e:
             log.exception(e)
             log.error(f'Failed to load palette "{file.stem}"')

@@ -5,13 +5,14 @@ import unicodedata
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
-from typing import Any, Tuple
+from typing import (Any, ItemsView, KeysView, Literal, Tuple, TypedDict,
+                    ValuesView)
 
 from pydantic import BaseModel, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema
 
-from pimpmyrice import colors as clr
 from pimpmyrice import files
+from pimpmyrice.colors import Color, LinkPalette, Palette, exp_gen_palette
 from pimpmyrice.config import JSON_SCHEMA_DIR
 from pimpmyrice.logger import get_logger
 from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
@@ -29,7 +30,7 @@ class ThemeConfig(BaseModel):
 
 class Mode(BaseModel):
     name: SkipJsonSchema[str] = Field(exclude=True)
-    palette: clr.Palette
+    palette: LinkPalette | Palette
     wallpaper: Wallpaper
     style: Style = {}
 
@@ -92,8 +93,8 @@ async def gen_from_img(
     if not image.is_file():
         return res.error(f'image not found at "{image}"')
 
-    dark_colors = await clr.exp_gen_palette(image)
-    light_colors = await clr.exp_gen_palette(image, light=True)
+    dark_colors = await exp_gen_palette(image)
+    light_colors = await exp_gen_palette(image, light=True)
     modes = {
         "dark": Mode(name="dark", wallpaper=Wallpaper(path=image), palette=dark_colors),
         "light": Mode(
@@ -138,9 +139,9 @@ def resolve_refs(
                     break
                 ref_slices.pop(0)
 
-            if isinstance(d, clr.Color):
+            if isinstance(d, Color):
                 res = getattr(d, ref_slices[0])
-                data[key] = clr.Color(res)
+                data[key] = Color(res)
             elif ref_slices[0] in d and not str(d[ref_slices[0]]).startswith("$"):
                 data[key] = d[ref_slices[0]]
             else:
@@ -153,7 +154,7 @@ def gen_theme_dict(
     theme: Theme,
     base_style: dict[str, Any],
     mode_name: str,
-    palette: clr.Palette,
+    palette: Palette,
     styles: list[Style] | None = None,
 ) -> AttrDict:
     theme = deepcopy(theme)

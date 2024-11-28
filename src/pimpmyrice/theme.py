@@ -7,7 +7,8 @@ import rich
 
 from pimpmyrice import parsers, schemas
 from pimpmyrice import theme_utils as tutils
-from pimpmyrice.colors import Palette, exp_gen_palette, get_palettes
+from pimpmyrice.colors import (GlobalPalette, LinkPalette, Palette,
+                               exp_gen_palette, get_palettes)
 from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR,
                                THEMES_DIR)
 from pimpmyrice.events import EventHandler
@@ -15,7 +16,7 @@ from pimpmyrice.files import download_file, load_json, save_json, save_yaml
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module import ModuleManager
 from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
-from pimpmyrice.utils import Result, Timer
+from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, Timer
 
 log = get_logger(__name__)
 
@@ -70,7 +71,7 @@ class ThemeManager:
         return styles
 
     @staticmethod
-    def get_palettes() -> dict[str, Palette]:
+    def get_palettes() -> dict[str, GlobalPalette]:
         return get_palettes()
 
     def parse_theme(self, theme_path: Path) -> Theme:
@@ -118,6 +119,7 @@ class ThemeManager:
                 res += download_res
                 return res.error("could not download file")
             file = download_res.value
+            res.info(f'downloaded "{file.name}"')
         else:
             file = Path(image)
 
@@ -225,18 +227,24 @@ class ThemeManager:
             if exclude_tags and any(tag in exclude_tags for tag in theme.tags):
                 continue
 
+            mode_names = {"light", "dark", *theme.modes.keys()}
+
             if regen_colors:
-                for k in ["light", "dark"]:
-                    if k not in theme.modes:
-                        theme.modes[k] = Mode(
-                            name=k,
-                            wallpaper=theme.wallpaper,
-                            palette=Palette(),
+                for mode_name in mode_names:
+                    if mode_name not in theme.modes:
+                        palette = await exp_gen_palette(
+                            img=theme.wallpaper.path, light=("light" in mode_name)
                         )
-                for mode in theme.modes.values():
-                    mode.palette = await exp_gen_palette(
-                        img=mode.wallpaper.path, light=("light" in mode.name)
-                    )
+                        theme.modes[mode_name] = Mode(
+                            name=mode_name,
+                            wallpaper=theme.wallpaper,
+                            palette=palette,
+                        )
+                    else:
+                        mode = theme.modes[mode_name]
+                        mode.palette = await exp_gen_palette(
+                            img=mode.wallpaper.path, light=("light" in mode.name)
+                        )
             save_res = await self.save_theme(theme=theme, old_name=theme.name)
             if save_res.value:
                 res.success(f'theme "{theme.name}" rewritten')
@@ -295,24 +303,56 @@ class ThemeManager:
             )
             mode_name = new_mode
 
-        styles = []
+        styles: list[DictOrAttrDict] = []
+
         if theme.style:
-            styles.append(theme.style)
+            if from_global := theme.style.get("from_global"):
+                if from_global not in self.styles:
+                    return res.error(
+                        f'global style "{from_global}" not found in {list(self.styles)}'
+                    )
+                theme_style = AttrDict(**self.styles[from_global]) + theme.style
+                styles.append(theme_style)
+            else:
+                styles.append(theme.style)
+
         if mode_style := theme.modes[mode_name].style:
+            if from_global := mode_style.get("from_global"):
+                if from_global not in self.styles:
+                    return res.error(
+                        f'global style "{from_global}" not found in {list(self.styles)}'
+                    )
+                mode_style = AttrDict(**self.styles[from_global]) + mode_style
+
             styles.append(mode_style)
+
         if styles_names:
             for style in styles_names.split(","):
                 if style not in self.styles:
-                    return res.error(f'style "{style}" not found')
+                    return res.error(
+                        f'global style "{style}" not found in {list(self.styles)}'
+                    )
                 styles.append(self.styles[style])
 
+        palette: Palette
         if palette_name:
             if palette_name in self.palettes:
                 palette = self.palettes[palette_name]
             else:
                 return res.error(f'palette "{palette_name}" not found')
         else:
-            palette = theme.modes[mode_name].palette
+            mode_palette = theme.modes[mode_name].palette
+            if isinstance(mode_palette, LinkPalette):
+                from_global = mode_palette.from_global
+
+                if from_global not in self.palettes:
+                    return res.error(
+                        f'global style "{from_global}" not found in {list(self.palettes)}'
+                    )
+
+                palette = self.palettes[from_global]
+            else:
+                palette = mode_palette
 
         theme_dict = tutils.gen_theme_dict(
             theme=theme,

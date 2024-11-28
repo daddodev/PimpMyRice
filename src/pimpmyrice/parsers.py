@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Union
 
 from pimpmyrice import files
-from pimpmyrice.colors import Palette
+from pimpmyrice.colors import GlobalPalette, Palette
 from pimpmyrice.config import CLIENT_OS, MODULES_DIR, Os
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module_utils import (FileAction, IfRunningAction, LinkAction,
@@ -32,7 +32,7 @@ def parse_wallpaper(
 def parse_theme(
     path: Path,
     global_styles: dict[str, Style],
-    global_palettes: dict[str, Palette],
+    global_palettes: dict[str, GlobalPalette],
 ) -> Theme:
     name = path.name
 
