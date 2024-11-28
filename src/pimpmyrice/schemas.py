@@ -104,14 +104,48 @@ def generate_module_json_schema() -> Result:
     return res.debug(f'module schema saved to "{schema_path}"')
 
 
+def add_zsh_suggestions(file_content: str, arg_name: str, values: list[str]) -> str:
+    if arg_name == "--tags":
+        replaced = ""
+
+        found_tags = False
+        for i, line in enumerate(file_content.splitlines()):
+            if "(--tags=-)--tags=-" in line:
+                found_tags = True
+                line = "		'--tags=:flag:->flags' \\"
+            elif "}" in line and found_tags:
+                found_tags = False
+                line = f"""
+    case "$state" in flags)
+        _values -s , 'flags' {" ".join(f'"{x}"' for x in values)}
+    esac
+}}
+"""
+
+            replaced += line + "\n"
+
+        return replaced
+    else:
+
+        replaced = file_content.replace(
+            f"""
+        myargs=('{arg_name.upper()}')
+        _message_next_arg
+""",
+            f"""
+        local -a available_{arg_name}s
+        available_{arg_name}s=({" ".join(f'"{x}"' for x in values)})
+
+        _describe '{arg_name} name' available_{arg_name}s
+""",
+        )
+        return replaced
+
+
 def generate_shell_suggestions(tm: ThemeManager) -> None:
     # TODO fork docopt_completion
 
-    doc = cli_doc.replace("THEME", f'({"|".join(tm.themes.keys())})')
-    doc = doc.replace("TAGS", f'({"|".join(tm.tags)})')
-    doc = re.sub(r"\bMODULES?\b", f'({"|".join(tm.mm.modules.keys())})', doc)
-    # TODO add command suggestions
-    doc = doc.replace("COMMAND [COMMAND_ARGS...]", "")
+    doc = cli_doc
 
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(printable_usage(doc)), options)
@@ -121,9 +155,12 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
 
     generators_to_use = _autodetect_generators()
     for generator in generators_to_use:
-        completion_file_content = generator.get_completion_file_content(
-            "pimp", param_tree, option_help
-        )
+        content = generator.get_completion_file_content("pimp", param_tree, option_help)
+
+        content = add_zsh_suggestions(content, "theme", [*tm.themes.keys()])
+        content = add_zsh_suggestions(content, "module", [*tm.mm.modules.keys()])
+        content = add_zsh_suggestions(content, "--tags", list(tm.tags))
+
         file_paths = generator.get_completion_filepath("pimp")
         if not isinstance(file_paths, Generator):
             file_paths = [file_paths]
@@ -137,7 +174,7 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
                 return
             try:
                 with open(file_path, "w") as fd:
-                    fd.write(completion_file_content)
+                    fd.write(content)
             except IOError:
                 log.debug("Failed to write {file_path}".format(file_path=file_path))
                 return
