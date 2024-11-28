@@ -24,22 +24,28 @@ log = get_logger(__name__)
 
 class ModuleManager:
     def __init__(self) -> None:
-        self.modules = self.get_modules()
+        self.modules: dict[str, Module] = {}
+        self.load_modules()
 
-    def get_modules(self) -> dict[str, Module]:
+    def load_modules(self) -> dict[str, Module]:
         modules: dict[str, Module] = {}
         timer = Timer()
 
         for module_dir in MODULES_DIR.iterdir():
-            parse_res = parse_module(module_dir)
-
-            if parse_res.value:
-                modules[parse_res.value.name] = parse_res.value
-                log.debug(f'module "{parse_res.value.name}" loaded')
+            self.load_module(module_dir)
 
         log.debug(f"{len(modules)} modules loaded in {timer.elapsed():.4f} sec")
 
         return modules
+
+    def load_module(self, module_dir: Path) -> Module | None:
+        module_res = parse_module(module_dir)
+
+        if module_res.value:
+            self.modules[module_res.value.name] = module_res.value
+            log.debug(f'module "{module_res.value.name}" loaded')
+            return module_res.value
+        return None
 
     async def run_modules(
         self,

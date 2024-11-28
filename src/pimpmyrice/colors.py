@@ -6,9 +6,12 @@ from pathlib import Path
 from typing import Any, Literal, Tuple
 
 import cv2
-from pydantic import BaseModel, Field
-from pydantic.color import Color as PydanticColor
+from pydantic import BaseModel, Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
+from pydantic_core import PydanticCustomError
+from pydantic_extra_types.color import RGBA
+from pydantic_extra_types.color import Color as PydanticColor
+from pydantic_extra_types.color import ColorType, parse_str, parse_tuple
 from sklearn.cluster import KMeans
 
 from pimpmyrice import files
@@ -20,6 +23,40 @@ log = get_logger(__name__)
 
 
 class Color(PydanticColor):
+    hue: int = 180
+    saturation: int = 50
+    lightness: int = 50
+
+    def __init__(self, value: ColorType) -> None:
+        self._rgba: RGBA
+        self._original: ColorType
+        if isinstance(value, (tuple, list)):
+            self._rgba = parse_tuple(value)
+        elif isinstance(value, str):
+            self._rgba = parse_str(value)
+        elif isinstance(value, Color):
+            self._rgba = value._rgba
+            value = value._original
+        else:
+            raise PydanticCustomError(
+                "color_error",
+                "value is not a valid color: value must be a tuple, list or string",
+            )
+
+        self._original = value
+
+        rgb = self.as_rgb_tuple()
+        h, l, s = colorsys.rgb_to_hls(*tuple(x / 255 for x in rgb))
+
+        self.hue, self.saturation, self.lightness = (
+            int(h * 360),
+            int(s * 100),
+            int(l * 100),
+        )
+
+    @property
+    def hsl(self) -> tuple[int, int, int]:
+        return self.hue, self.saturation, self.lightness
 
     @property
     def alt(self) -> Color:
@@ -43,15 +80,10 @@ class Color(PydanticColor):
 
     @property
     def hex(self) -> str:
-        hex = self.as_hex()
-        long_hex = "#"
-        if len(hex) == 4:
-            for v in hex[1:]:
-                long_hex += v * 2
-        else:
-            long_hex = hex
+        rgb = tuple(f"{hex(int(x))[2:] :0>2}" for x in self.as_rgb_tuple())
+        hex_string = "#"+"".join(rgb)
 
-        return long_hex
+        return hex_string
 
     @property
     def nohash(self) -> str:
