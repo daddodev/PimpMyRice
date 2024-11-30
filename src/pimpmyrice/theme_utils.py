@@ -31,7 +31,7 @@ class ThemeConfig(BaseModel):
 class Mode(BaseModel):
     name: SkipJsonSchema[str] = Field(exclude=True)
     palette: LinkPalette | Palette
-    wallpaper: Wallpaper
+    wallpaper: Wallpaper|None=None
     style: Style = {}
 
 
@@ -74,10 +74,29 @@ def dump_theme_for_file(theme: Theme) -> dict[str, Any]:
         },
     )
 
+    for mode in dump["modes"].values():
+        if not mode["style"]:
+            mode.pop("style")
+
+        if mode["wallpaper"] == dump["wallpaper"]:
+            mode.pop("wallpaper")
+        else:
+            mode["wallpaper"]["path"] = str(Path(mode["wallpaper"]["path"]).name)
+            if mode["wallpaper"]["mode"] == "fill":
+                mode["wallpaper"].pop("mode")
+
+
+    if not dump["style"]:
+        dump.pop("style")
+
     dump["wallpaper"]["path"] = str(Path(dump["wallpaper"]["path"]).name)
 
-    for mode in dump["modes"].values():
-        mode["wallpaper"]["path"] = str(Path(mode["wallpaper"]["path"]).name)
+    if dump["wallpaper"]["mode"] == "fill":
+        dump["wallpaper"].pop("mode")
+
+    if not dump["tags"]:
+        dump.pop("tags")
+
 
     # print("dump for file:", json.dumps(dump, indent=4))
     return dump
