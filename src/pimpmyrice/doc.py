@@ -2,18 +2,17 @@
 See https://pimpmyrice.vercel.app/docs for more info.
 
 Usage:
-    pimp gen IMAGE...       [--apply] [--name=NAME] [--tags=TAGS] [--style=STYLE]
-                            [--palette=PALETTE] [options]
+    pimp gen IMAGE...       [--apply] [--name=NAME] [--tags=TAGS] [options]
     pimp random             [--mode=MODE] [--name=NAME] [--tags=TAGS]
-                            [--exclude-tags=TAGS] [--include-modules=MODULES]
+                            [--exclude-tags=TAGS] [--modules=MODULES]
                             [--exclude-modules=MODULES] [--style=STYLE]
                             [--palette=PALETTE] [--print-theme-dict]
                             [options]
-    pimp refresh            [--mode=MODE] [--include-modules=MODULES]
+    pimp refresh            [--mode=MODE] [--modules=MODULES]
                             [--exclude-modules=MODULES] [--style=STYLE]
                             [--palette=PALETTE] [--print-theme-dict]
                             [options]
-    pimp set theme THEME    [--mode=MODE] [--include-modules=MODULES]
+    pimp set theme THEME    [--mode=MODE] [--modules=MODULES]
                             [--exclude-modules=MODULES] [--style=STYLE]
                             [--palette=PALETTE] [--print-theme-dict]
                             [options]
