@@ -20,6 +20,8 @@ Usage:
     pimp delete theme THEME [options]
     pimp rename theme THEME NEW_NAME [options]
     pimp toggle mode [options]
+    pimp add tags THEME... --tags=TAGS
+    pimp remove tags [THEME...] --tags=TAGS
     pimp clone module MODULE_URL... [options]
     pimp delete module MODULE [options]
     pimp reinit module MODULE [options]

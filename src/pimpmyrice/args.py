@@ -126,6 +126,13 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         elif args["reinit"]:
             return await tm.mm.init_module(module_name=args["MODULE"])
 
+    elif args["tags"]:
+        tags = set(args["--tags"].split(","))
+        if args["add"]:
+            return await tm.add_tags(args["THEME"], tags)
+        elif args["remove"]:
+            return await tm.remove_tags(args["THEME"], tags)
+
     elif args["toggle"]:
         return await tm.toggle_mode()
 

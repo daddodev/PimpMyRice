@@ -451,6 +451,48 @@ class ThemeManager:
 
         return await self.apply_theme(mode_name=mode_name)
 
+    async def add_tags(self, themes_names: list[str], tags: set[str]) -> Result:
+        res = Result()
+
+        for theme_name in themes_names:
+            if theme_name not in self.themes:
+                res.error('theme "{theme_name}" not found')
+                continue
+
+            theme = self.themes[theme_name]
+
+            for tag in tags:
+                theme.tags.add(tag)
+                save_res = await self.save_theme(theme, theme.name)
+                res += save_res
+                if not save_res.errors:
+                    res.info(f'tag "{tag}" added to theme "{theme.name}"')
+
+        return res
+
+    async def remove_tags(self, themes_names: list[str], tags: set[str]) -> Result:
+        res = Result()
+
+        if len(themes_names) == 0:
+            themes_names = list(self.themes.keys())
+
+        for theme_name in themes_names:
+            if theme_name not in self.themes:
+                res.error('theme "{theme_name}" not found')
+                continue
+
+            theme = self.themes[theme_name]
+
+            for tag in tags:
+                if tag in theme.tags:
+                    theme.tags.remove(tag)
+                    save_res = await self.save_theme(theme, theme.name)
+                    res += save_res
+                    if not save_res.errors:
+                        res.info(f'tag "{tag}" removed from theme "{theme.name}"')
+
+        return res
+
     async def list_themes(self) -> Result:
         res = Result()
 
