@@ -47,6 +47,7 @@ class ShellAction(BaseModel):
     action: Literal["shell"] = Field(default="shell")
     module_name: SkipJsonSchema[str] = Field(exclude=True)
     command: str
+    detached: bool = False
 
     model_config = ConfigDict(
         json_schema_extra=partial(add_action_type_to_schema, "shell")
@@ -61,6 +62,12 @@ class ShellAction(BaseModel):
                 module_name=self.module_name,
                 theme_dict=theme_dict,
             )
+
+            if self.detached:
+                run_shell_command_detached(cmd)
+                return res.debug(
+                    f'command "{cmd}" started in background', self.module_name
+                )
 
             out, err = await run_shell_command(cmd)
 
@@ -379,10 +386,6 @@ def run_shell_command_detached(command: str, cwd: Path | None = None) -> None:
 
 
 async def run_shell_command(command: str, cwd: Path | None = None) -> tuple[str, str]:
-    if command.endswith("&"):
-        run_shell_command_detached(command[:-1].strip(), cwd)
-        return f'command "{command}" started in background', ""
-
     proc = await asyncio.create_subprocess_shell(
         command,
         stdout=asyncio.subprocess.PIPE,
