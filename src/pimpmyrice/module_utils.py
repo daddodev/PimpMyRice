@@ -194,7 +194,7 @@ class IfRunningAction(BaseModel):
     action: Literal["if_running"] = Field(default="if_running")
     module_name: SkipJsonSchema[str] = Field(exclude=True)
     program_name: str
-    should_be_running: bool
+    should_be_running: bool = True
 
     model_config = ConfigDict(
         json_schema_extra=partial(add_action_type_to_schema, "if_running")
