@@ -110,7 +110,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     elif args["module"]:
         if args["clone"]:
-            return await tm.mm.clone_module(args["MODULE_URL"])
+            return await tm.mm.clone_module(args["MODULE_URLS"])
 
         elif args["delete"]:
             return await tm.mm.delete_module(args["MODULE"])
@@ -129,9 +129,9 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
     elif args["tags"]:
         tags = set(args["--tags"].split(","))
         if args["add"]:
-            return await tm.add_tags(args["THEME"], tags)
+            return await tm.add_tags(args["THEMES"], tags)
         elif args["remove"]:
-            return await tm.remove_tags(args["THEME"], tags)
+            return await tm.remove_tags(args["THEMES"], tags)
 
     elif args["toggle"]:
         return await tm.toggle_mode()
@@ -153,7 +153,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         if apply := args["--apply"]:
             a["apply"] = apply
 
-        for img in args["IMAGE"]:
+        for img in args["IMAGES"]:
             r = await tm.generate_theme(image=img, **a)
             res += r
 
@@ -189,5 +189,4 @@ mode: {tm.config.mode}
         elif args["modules"]:
             return await tm.mm.rewrite_modules(name_includes=args["--name"])
 
-    return res.error("not implemented")
     return res.error("not implemented")
