@@ -15,7 +15,6 @@ log = get_logger(__name__)
 async def cli() -> None:
     try:
         args = docopt(cli_doc)
-        print(args["THEME"])
     except DocoptExit:
         print(cli_doc)
         return

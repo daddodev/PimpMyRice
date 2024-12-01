@@ -33,6 +33,7 @@ class ThemeManager:
         self.event_handler = EventHandler()
         self.mm = ModuleManager()
 
+        # TODO move
         try:
             schemas.generate_theme_json_schema(self)
             schemas.generate_module_json_schema()
@@ -108,7 +109,7 @@ class ThemeManager:
         self,
         image: str,
         name: str | None = None,
-        tags: list[str] | None = None,
+        tags: set[str] | None = None,
         apply: bool = False,
     ) -> Result:
         res = Result()
@@ -143,6 +144,7 @@ class ThemeManager:
             apply_res = await self.apply_theme(save_res.value)
             res += apply_res
 
+        res.ok = True
         return res
 
     async def rename_theme(
@@ -164,6 +166,8 @@ class ThemeManager:
 
         if not save_res.value:
             return res.error(f'failed renaming theme "{theme_name}"')
+
+        res.ok = True
         return res.success(f'renamed theme "{theme_name}" to "{new_name}"')
 
     async def save_theme(
@@ -206,14 +210,15 @@ class ThemeManager:
                 self.config.theme = theme.name
 
         res.value = theme.name
+        res.ok = True
         return res
 
     async def rewrite_themes(
         self,
         regen_colors: bool = False,
         name_includes: str | None = None,
-        include_tags: list[str] | None = None,
-        exclude_tags: list[str] | None = None,
+        include_tags: set[str] | None = None,
+        exclude_tags: set[str] | None = None,
     ) -> Result:
         res = Result()
 
@@ -251,6 +256,7 @@ class ThemeManager:
             else:
                 res += save_res
 
+        res.ok = True
         return res
 
     def delete_theme(self, theme_name: str) -> Result:
@@ -270,6 +276,7 @@ class ThemeManager:
             self.config.theme = None
         self.themes.pop(theme_name)
 
+        res.ok = True
         return res.success(f'theme "{theme_name}" deleted')
 
     async def apply_theme(
@@ -386,6 +393,7 @@ class ThemeManager:
 
         await self.event_handler.publish("theme_applied")
 
+        res.ok = True
         return res
 
     async def set_random_theme(
@@ -396,8 +404,8 @@ class ThemeManager:
         name_includes: str | None = None,
         include_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
-        include_tags: list[str] | None = None,
-        exclude_tags: list[str] | None = None,
+        include_tags: set[str] | None = None,
+        exclude_tags: set[str] | None = None,
         print_theme_dict: bool = False,
     ) -> Result:
         res = Result()
@@ -435,6 +443,7 @@ class ThemeManager:
 
         res += apply_res
 
+        res.ok = True
         return res
 
     async def toggle_mode(self) -> Result:
@@ -468,6 +477,7 @@ class ThemeManager:
                 if not save_res.errors:
                     res.info(f'tag "{tag}" added to theme "{theme.name}"')
 
+        res.ok = True
         return res
 
     async def remove_tags(self, themes_names: list[str], tags: set[str]) -> Result:
@@ -491,6 +501,7 @@ class ThemeManager:
                     if not save_res.errors:
                         res.info(f'tag "{tag}" removed from theme "{theme.name}"')
 
+        res.ok = True
         return res
 
     async def list_themes(self) -> Result:
@@ -500,6 +511,7 @@ class ThemeManager:
         for theme in self.themes.values():
             res.info(f"{theme.name:10}\t\t{', '.join(theme.tags)}")
 
+        res.ok = True
         return res
 
     async def list_tags(self) -> Result:
@@ -507,6 +519,7 @@ class ThemeManager:
 
         res.info("\n".join(self.tags))
 
+        res.ok = True
         return res
 
     async def list_palettes(self) -> Result:
@@ -515,6 +528,7 @@ class ThemeManager:
         for palette in self.palettes:
             res.info(f"{palette}")
 
+        res.ok = True
         return res
 
     async def list_styles(self) -> Result:
@@ -523,4 +537,5 @@ class ThemeManager:
         for style in self.styles:
             res.info(f"{style}")
 
+        res.ok = True
         return res

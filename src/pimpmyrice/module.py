@@ -126,6 +126,7 @@ class ModuleManager:
                 f"{len({*pre_runners, *runners})} modules applied in {timer.elapsed():.2f} sec"
             )
 
+            res.ok = True
             return res
 
     async def run_module_command(
@@ -143,6 +144,7 @@ class ModuleManager:
         module = self.modules[module_name]
         res += await module.execute_command(command, tm, *args, **kwargs)
 
+        res.ok = True
         return res
 
     async def rewrite_modules(
@@ -198,6 +200,7 @@ class ModuleManager:
         init_res = await module.execute_init()
         res += init_res
 
+        res.ok = True
         return res
 
     async def clone_module(self, source: str | Path | list[str | Path]) -> Result:
@@ -244,7 +247,7 @@ class ModuleManager:
                             )
                             continue
                         else:
-                            link_path.parent.mkdir(exist_ok=True)
+                            link_path.parent.mkdir(exist_ok=True, parents=True)
 
                         os.symlink(action.template, link_path)
                         res.info(f'linked "{link_path}" to "{action.template}"')
@@ -265,6 +268,7 @@ class ModuleManager:
                 res.exception(e)
                 continue
 
+        res.ok = True
         return res
 
     async def delete_module(self, module_name: str) -> Result:
@@ -281,6 +285,7 @@ class ModuleManager:
             res.exception(e)
         else:
             self.modules.pop(module_name)
+            res.ok = True
             res.success(f'module "{module_name}" deleted')
         finally:
             return res
@@ -291,4 +296,5 @@ class ModuleManager:
         for module in self.modules:
             res.info(module)
 
+        res.ok = True
         return res

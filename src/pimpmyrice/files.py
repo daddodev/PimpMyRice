@@ -70,14 +70,14 @@ def import_image(image_path: Path, theme_dir: Path) -> Path:
 
 def check_config_dirs() -> None:
     for dir in [
-        PIMP_CONFIG_DIR,
         THEMES_DIR,
         STYLES_DIR,
         PALETTES_DIR,
         MODULES_DIR,
         TEMP_DIR,
+        JSON_SCHEMA_DIR,
     ]:
-        dir.mkdir(exist_ok=True)
+        dir.mkdir(exist_ok=True, parents=True)
 
     if not BASE_STYLE_FILE.exists():
         save_json(BASE_STYLE_FILE, default_base_style)
