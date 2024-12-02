@@ -26,8 +26,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install ".[dev]"
 
-      - name: Run tests
+      - name: Run Mypy
+        run: python -m mypy src/pimpmyrice
+
+      - name: Run Pytest
         run: python -m pytest --junitxml=reports/test-results.xml
+
+      - name: Run Black
+        run: python -m black --check src/pimpmyrice
 
       - name: Upload test results
         if: always()

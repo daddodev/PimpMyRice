@@ -39,6 +39,6 @@ setuptools.setup(
         "infi.docopt-completion",
     ],
     extras_require={
-        "dev": ["pytest", "pytest-asyncio"],
+        "dev": ["pytest", "pytest-asyncio", "mypy", "black"],
     },
 )
