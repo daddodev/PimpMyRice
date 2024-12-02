@@ -5,8 +5,16 @@ import unicodedata
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
-from typing import (Any, ItemsView, KeysView, Literal, Tuple, TypedDict,
-                    TypeVar, ValuesView)
+from typing import (
+    Any,
+    ItemsView,
+    KeysView,
+    Literal,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    ValuesView,
+)
 
 from pydantic import BaseModel, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema

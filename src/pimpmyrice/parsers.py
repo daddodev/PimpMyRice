@@ -5,9 +5,16 @@ from pimpmyrice import files
 from pimpmyrice.colors import GlobalPalette, Palette
 from pimpmyrice.config import CLIENT_OS, MODULES_DIR, Os
 from pimpmyrice.logger import get_logger
-from pimpmyrice.module_utils import (FileAction, IfRunningAction, LinkAction,
-                                     Module, ModuleInit, ModuleRun,
-                                     PythonAction, ShellAction)
+from pimpmyrice.module_utils import (
+    FileAction,
+    IfRunningAction,
+    LinkAction,
+    Module,
+    ModuleInit,
+    ModuleRun,
+    PythonAction,
+    ShellAction,
+)
 from pimpmyrice.theme_utils import Style, Theme, Wallpaper
 from pimpmyrice.utils import Result, parse_string_vars
 

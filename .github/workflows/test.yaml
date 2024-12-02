@@ -32,8 +32,11 @@ jobs:
       - name: Run Pytest
         run: python -m pytest --junitxml=reports/test-results.xml
 
+      - name: Run Isort
+        run: python -m isort --check --diff src/pimpmyrice
+
       - name: Run Black
-        run: python -m black --check src/pimpmyrice
+        run: python -m black --check --diff src/pimpmyrice
 
       - name: Upload test results
         if: always()

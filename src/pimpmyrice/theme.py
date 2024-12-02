@@ -7,13 +7,22 @@ import rich
 
 from pimpmyrice import parsers, schemas
 from pimpmyrice import theme_utils as tutils
-from pimpmyrice.colors import (GlobalPalette, LinkPalette, Palette,
-                               exp_gen_palette, get_palettes)
-from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR,
-                               THEMES_DIR)
+from pimpmyrice.colors import (
+    GlobalPalette,
+    LinkPalette,
+    Palette,
+    exp_gen_palette,
+    get_palettes,
+)
+from pimpmyrice.config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
 from pimpmyrice.events import EventHandler
-from pimpmyrice.files import (check_config_dirs, download_file, load_json,
-                              save_json, save_yaml)
+from pimpmyrice.files import (
+    check_config_dirs,
+    download_file,
+    load_json,
+    save_json,
+    save_yaml,
+)
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module import ModuleManager
 from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig

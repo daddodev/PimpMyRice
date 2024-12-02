@@ -13,8 +13,7 @@ from pimpmyrice.files import load_yaml, save_json, save_yaml
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module_utils import FileAction, Module
 from pimpmyrice.parsers import parse_module
-from pimpmyrice.utils import (AttrDict, Lock, Result, Timer, is_locked,
-                              parse_string_vars)
+from pimpmyrice.utils import AttrDict, Lock, Result, Timer, is_locked, parse_string_vars
 
 if TYPE_CHECKING:
     from pimpmyrice.theme import ThemeManager

@@ -7,10 +7,18 @@ from typing import Any
 import requests
 import yaml
 
-from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, JSON_SCHEMA_DIR,
-                               LOG_FILE, MODULES_DIR, PALETTES_DIR,
-                               PIMP_CONFIG_DIR, STYLES_DIR, TEMP_DIR,
-                               THEMES_DIR)
+from pimpmyrice.config import (
+    BASE_STYLE_FILE,
+    CONFIG_FILE,
+    JSON_SCHEMA_DIR,
+    LOG_FILE,
+    MODULES_DIR,
+    PALETTES_DIR,
+    PIMP_CONFIG_DIR,
+    STYLES_DIR,
+    TEMP_DIR,
+    THEMES_DIR,
+)
 from pimpmyrice.keywords import default_base_style
 from pimpmyrice.logger import get_logger
 from pimpmyrice.utils import Result

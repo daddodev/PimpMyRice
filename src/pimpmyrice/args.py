@@ -3,8 +3,14 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
-from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, MODULES_DIR,
-                               PALETTES_DIR, STYLES_DIR, THEMES_DIR)
+from pimpmyrice.config import (
+    BASE_STYLE_FILE,
+    CONFIG_FILE,
+    MODULES_DIR,
+    PALETTES_DIR,
+    STYLES_DIR,
+    THEMES_DIR,
+)
 from pimpmyrice.files import load_json
 from pimpmyrice.logger import get_logger
 from pimpmyrice.theme import ThemeManager

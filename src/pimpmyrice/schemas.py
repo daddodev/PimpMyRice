@@ -6,8 +6,11 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generator
 
 from docopt import formal_usage, parse_defaults, parse_pattern, printable_usage
-from infi.docopt_completion.common import (CommandParams, build_command_tree,
-                                           get_options_descriptions)
+from infi.docopt_completion.common import (
+    CommandParams,
+    build_command_tree,
+    get_options_descriptions,
+)
 from infi.docopt_completion.docopt_completion import _autodetect_generators
 from pydantic import BaseModel, create_model
 

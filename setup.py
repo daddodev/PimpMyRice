@@ -46,6 +46,7 @@ setuptools.setup(
             "black",
             "types-requests",
             "types-PyYAML",
+            "isort",
         ],
     },
 )
