@@ -10,4 +10,3 @@ for module in __all__:
 
 
 set_up_logging()
-check_config_dirs()

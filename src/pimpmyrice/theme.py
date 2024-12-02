@@ -12,7 +12,8 @@ from pimpmyrice.colors import (GlobalPalette, LinkPalette, Palette,
 from pimpmyrice.config import (BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR,
                                THEMES_DIR)
 from pimpmyrice.events import EventHandler
-from pimpmyrice.files import download_file, load_json, save_json, save_yaml
+from pimpmyrice.files import (check_config_dirs, download_file, load_json,
+                              save_json, save_yaml)
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module import ModuleManager
 from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
@@ -24,6 +25,7 @@ log = get_logger(__name__)
 class ThemeManager:
     def __init__(self) -> None:
         timer = Timer()
+        check_config_dirs()
         self.base_style = self.get_base_style()
         self.styles = self.get_styles()
         self.palettes = self.get_palettes()

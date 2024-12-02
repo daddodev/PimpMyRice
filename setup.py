@@ -37,4 +37,7 @@ setuptools.setup(
         "pydantic",
         "infi.docopt-completion",
     ],
+    extras_require={
+        "dev": ["pytest", "pytest-asyncio"],
+    },
 )
