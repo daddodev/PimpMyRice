@@ -35,6 +35,7 @@ setuptools.setup(
         "rich",
         "typing_extensions",
         "pydantic",
+        "pydantic-extra-types",
         "infi.docopt-completion",
     ],
     extras_require={
