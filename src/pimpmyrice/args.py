@@ -27,7 +27,7 @@ async def process_edit_args(args: dict[str, Any]) -> None:
     if not args["edit"]:
         return
 
-    if args["keywords"]:
+    if args["base-style"]:
         open_editor(BASE_STYLE_FILE)
     elif args["theme"]:
         theme = args["THEME"]

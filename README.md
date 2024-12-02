@@ -1,52 +1,50 @@
-# 🍙 PimpMyRice
-
-### The overkill theme manager
-
 _This project is currently in beta and may be subject to breaking changes._
 
-https://github.com/user-attachments/assets/999c8fc1-2f67-4da5-8780-6c0e11695007
+# 🍙 PimpMyRice
 
+### The overkill rice manager
 
-## What is a rice?
+I heard you like ricing, so I made a ricer for your rices.
 
-> Ricing refers to the process of customizing and optimizing the visual appearance of a desktop environment, particularly in Linux or Unix-based systems.<br />
-It involves modifying elements such as themes, icons, fonts, window managers, and widgets to create a unique and aesthetically pleasing interface.<br />
-A well-customized setup, called a "rice", showcases the user's attention to detail and creativity.
+**[<kbd>Documentation</kbd>](https://pimpmyrice.vercel.app/docs)** 
+**[<kbd>Starter modules</kbd>](https://pimpmyrice.vercel.app/modules)** 
+
+## ❓ What is a rice?
+
+> Ricing refers to the process of customizing the visual appearance and functionality of a desktop environment, usually in Linux or Unix-based systems.<br />
+It involves tweaking themes, icons, fonts, and configurations to achieve a unique and aesthetically pleasing interface.<br />
+A well-customized setup, called a "rice", showcases the user's attention to detail, personality and creativity.
 
 Take a look at [r/unixporn](https://www.reddit.com/r/unixporn) for inspiration.
 
-## What does PimpMyRice do?
+## 🤔 What does PimpMyRice do?
 
-PimpMyRice allows you to generate, organize and apply your rices.<br />
-It applies themes through modules, each module being responsible for styling a specific program (eg: [discord](https://github.com/pimpmyrice-modules/betterdiscord)).
+PimpMyRice allows you to generate, organize and apply [themes](https://pimpmyrice.vercel.app/docs/theme) to your system.<br />
+It applies them through [modules](https://pimpmyrice.vercel.app/docs/module), each module being responsible for styling a specific program (eg: [discord](https://github.com/pimpmyrice-modules/betterdiscord)).
 
-## Quick start
+See [overview](https://pimpmyrice.vercel.app/docs/overview) for more information.
 
-### Install
+### ⚙️ Features
 
-<!-- #### Arch Linux -->
-<!---->
-<!-- ```bash -->
-<!-- yay -S pimpmyrice-git -->
-<!-- ``` -->
-<!---->
-<!-- #### Ubuntu -->
-<!---->
-<!-- ```bash -->
-<!-- sudo add-apt-repository ppa:daddodev/pimpmyrice -->
-<!-- sudo apt-get update -->
-<!-- sudo apt-get install pimpmyrice -->
-<!-- ``` -->
+- 🧩 Easily extendable
+- 📝 Autocomplete in editor and terminal (only zsh for now)
+- 🌈 Color extraction (alpha)
+- 🔗 [Server with API](https://github.com/daddodev/pimpmyrice_server) (alpha)
+- 🖼️ GUI (coming soon)
 
-#### [Pipx](https://pipx.pypa.io/stable/installation/)
+## 🚀 Quick start
+
+### 📥 Install
+
+#### Pipx
 
 ```bash
 pipx install pimpmyrice
 ```
 
-### Add some modules
+### 📦 Add some modules
 
-[Create your own modules](https://pimpmyrice.vercel.app/docs/module#create-a-module) from scratch or clone from the [official modules](https://github.com/orgs/pimpmyrice-modules/repositories) to get started.
+[Create your own modules](https://pimpmyrice.vercel.app/docs/module#create-a-module) from scratch or clone from the [starter modules](https://pimpmyrice.vercel.app/modules) to get started.
 
 For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacritty) module:
 
@@ -54,7 +52,7 @@ For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacrit
 pimp clone module pimp://alacritty
 ```
 
-### Generate and apply a new theme
+### 🎨 Generate and apply a new theme
 
 Generate a theme from an image:
 
@@ -70,4 +68,28 @@ Set the generated theme:
 pimp set theme example
 ```
 
-## [Documentation](https://pimpmyrice.vercel.app/docs)
+
+### 🌟 Start ricing
+
+Edit the current theme:
+
+```bash
+pimp edit theme
+```
+
+
+Edit the base style:
+
+```bash
+pimp edit base-style
+```
+
+Enjoy ricing! 🍙
+
+**[<kbd>Browse the documentation</kbd>](https://pimpmyrice.vercel.app/docs/overview)** 
+
+## 🙏 Related Projects / Thanks 
+
+- [pywal](https://github.com/dylanaraps/pywal)
+- [wpgtk](https://github.com/deviantfero/wpgtk)
+- [r/unixporn](https://www.reddit.com/r/unixporn)
