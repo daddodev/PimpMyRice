@@ -148,7 +148,7 @@ class AttrDict(dict[str, Any]):
         return merged(self, AttrDict(other))
 
 
-DictOrAttrDict = dict[str, Any] | AttrDict
+DictOrAttrDict = TypeVar("DictOrAttrDict", dict[str, Any], AttrDict)
 
 
 def process_template(template: str, values: dict[str, Any]) -> str:

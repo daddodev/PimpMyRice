@@ -17,7 +17,7 @@ from pimpmyrice.files import (check_config_dirs, download_file, load_json,
 from pimpmyrice.logger import get_logger
 from pimpmyrice.module import ModuleManager
 from pimpmyrice.theme_utils import Mode, Style, Theme, ThemeConfig
-from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, Timer
+from pimpmyrice.utils import AttrDict, Result, Timer
 
 log = get_logger(__name__)
 
@@ -195,7 +195,10 @@ class ThemeManager:
         #      as it leaves only the filename
         theme.wallpaper.path = tutils.import_image(theme.wallpaper.path, theme_dir)
         for mode in theme.modes.values():
-            mode.wallpaper.path = tutils.import_image(mode.wallpaper.path, theme_dir)
+            if mode.wallpaper:
+                mode.wallpaper.path = tutils.import_image(
+                    mode.wallpaper.path, theme_dir
+                )
 
         dump = tutils.dump_theme_for_file(theme)
         save_json(theme_dir / "theme.json", dump)
@@ -249,9 +252,10 @@ class ThemeManager:
                         )
                     else:
                         mode = theme.modes[mode_name]
-                        mode.palette = await exp_gen_palette(
-                            img=mode.wallpaper.path, light=("light" in mode.name)
-                        )
+                        if mode.wallpaper:
+                            mode.palette = await exp_gen_palette(
+                                img=mode.wallpaper.path, light=("light" in mode.name)
+                            )
             save_res = await self.save_theme(theme=theme, old_name=theme.name)
             if save_res.value:
                 res.success(f'theme "{theme.name}" rewritten')
@@ -312,7 +316,7 @@ class ThemeManager:
             )
             mode_name = new_mode
 
-        styles: list[DictOrAttrDict] = []
+        styles: list[Style] = []
 
         if theme.style:
             if from_global := theme.style.get("from_global"):
