@@ -2,7 +2,7 @@
 See https://pimpmyrice.vercel.app/docs for more info.
 
 Usage:
-    pimp gen IMAGES...       [--apply] [--name=NAME] [--tags=TAGS] [options]
+    pimp gen IMAGE...       [--apply] [--name=NAME] [--tags=TAGS] [options]
     pimp random             [--mode=MODE] [--name=NAME] [--tags=TAGS]
                             [--exclude-tags=TAGS] [--modules=MODULES]
                             [--exclude-modules=MODULES] [--style=STYLE]
@@ -22,7 +22,7 @@ Usage:
     pimp toggle mode [options]
     pimp add tags THEMES... --tags=TAGS
     pimp remove tags [THEMES...] --tags=TAGS
-    pimp clone module MODULE_URLS... [options]
+    pimp clone module MODULE_URL... [options]
     pimp delete module MODULE [options]
     pimp reinit module MODULE [options]
     pimp run module MODULE COMMAND [COMMAND_ARGS...] [options]

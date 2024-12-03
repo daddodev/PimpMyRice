@@ -127,7 +127,18 @@ def add_zsh_suggestions(file_content: str, arg_name: str, values: list[str]) -> 
 
             replaced += line + "\n"
 
-        return replaced
+    elif arg_name == "IMAGE":
+
+        replaced = file_content.replace(
+            f"""
+        myargs=('{arg_name.upper()}')
+        _message_next_arg
+""",
+            f"""
+        myargs=('{arg_name.upper()}')
+        _files
+""",
+        )
     else:
 
         replaced = file_content.replace(
@@ -142,7 +153,8 @@ def add_zsh_suggestions(file_content: str, arg_name: str, values: list[str]) -> 
         _describe '{arg_name} name' available_{arg_name}s
 """,
         )
-        return replaced
+
+    return replaced
 
 
 def generate_shell_suggestions(tm: ThemeManager) -> None:
@@ -163,6 +175,7 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
         content = add_zsh_suggestions(content, "theme", [*tm.themes.keys()])
         content = add_zsh_suggestions(content, "module", [*tm.mm.modules.keys()])
         content = add_zsh_suggestions(content, "--tags", list(tm.tags))
+        content = add_zsh_suggestions(content, "IMAGE", [])
 
         file_paths = generator.get_completion_filepath("pimp")
         if not isinstance(file_paths, Generator):

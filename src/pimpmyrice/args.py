@@ -116,7 +116,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     elif args["module"]:
         if args["clone"]:
-            return await tm.mm.clone_module(args["MODULE_URLS"])
+            return await tm.mm.clone_module(args["MODULE_URL"])
 
         elif args["delete"]:
             return await tm.mm.delete_module(args["MODULE"])
