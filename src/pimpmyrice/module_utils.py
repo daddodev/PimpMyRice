@@ -197,6 +197,34 @@ class PythonAction(BaseModel):
             return res
 
 
+class WaitForAction(BaseModel):
+    action: Literal["wait_for"] = Field(default="wait_for")
+    module_name: SkipJsonSchema[str] = Field(exclude=True)
+    module: str
+
+    model_config = ConfigDict(
+        json_schema_extra=partial(add_action_type_to_schema, "wait_for")
+    )
+
+    async def run(self, theme_dict: AttrDict, modules_state: dict[str, Any]) -> Result:
+        res = Result()
+
+        try:
+            res.debug(f'waiting for module "{self.module}"...')
+            while not modules_state[self.module]["done"]:
+                await asyncio.sleep(0.1)
+            res.debug(f'done waiting for module "{self.module}"')
+            res.ok = True
+
+        except Exception as e:
+            res.exception(e, self.module_name)
+        finally:
+            return res
+
+    def __str__(self) -> str:
+        return f'wait for "{self.module}" to finish'
+
+
 class IfRunningAction(BaseModel):
     action: Literal["if_running"] = Field(default="if_running")
     module_name: SkipJsonSchema[str] = Field(exclude=True)
@@ -207,7 +235,7 @@ class IfRunningAction(BaseModel):
         json_schema_extra=partial(add_action_type_to_schema, "if_running")
     )
 
-    async def run(self, theme_map: AttrDict) -> Result:
+    async def run(self, theme_dict: AttrDict) -> Result:
         res = Result()
 
         try:
@@ -272,7 +300,7 @@ ModuleInit = Union[LinkAction]
 ModulePreRun = Union[PythonAction]
 
 
-ModuleRun = Union[ShellAction, FileAction, PythonAction, IfRunningAction]
+ModuleRun = Union[ShellAction, FileAction, PythonAction, IfRunningAction, WaitForAction]
 
 ModuleCommand = Union[PythonAction]
 
@@ -341,7 +369,9 @@ class Module(BaseModel):
             res.value = theme_dict
             return res
 
-    async def execute_run(self, theme_dict: AttrDict) -> Result:
+    async def execute_run(
+        self, theme_dict: AttrDict, modules_state: dict[str, Any]
+    ) -> Result:
         res = Result(name=self.name)
         timer = Timer()
 
@@ -354,9 +384,14 @@ class Module(BaseModel):
 
         for action in self.run:
             try:
-                action_res = await action.run(theme_dict)
+                if isinstance(action, WaitForAction):
+                    action_res = await action.run(theme_dict, modules_state)
+                else:
+                    action_res = await action.run(theme_dict)
+
                 res += action_res
                 if not action_res.ok:
+                    res.debug(f"interrupted because res.ok is false:\n{action_res}")
                     break
 
             except Exception as e:

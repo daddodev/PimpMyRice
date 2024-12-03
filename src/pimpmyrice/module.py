@@ -109,15 +109,29 @@ class ModuleManager:
                         f"modifier applied in {mod_timer.elapsed():.2f} seconds", name
                     )
 
-            tasks = [self.modules[name].execute_run(theme_dict) for name in runners]
+            modules_state = {m: {"done": False} for m in self.modules}
+
+            tasks = [
+                self.modules[name].execute_run(theme_dict, modules_state=modules_state)
+                for name in runners
+            ]
 
             for t in asyncio.as_completed(tasks):
                 task_res = await t
                 if isinstance(task_res, Exception):
                     module_res = Result(name="how did this happen")
                     module_res.exception(task_res)
-                else:
+
+                if isinstance(task_res, Result):
+                    if task_res.name:
+                        modules_state[task_res.name]["done"] = True
+                    else:
+                        task_res.error(f"Result has no name")
+
                     module_res = task_res
+                else:
+                    module_res = Result(name="how did this happen?")
+                    module_res.exception(task_res)
 
                 res += module_res
 
