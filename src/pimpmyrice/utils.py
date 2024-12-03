@@ -94,6 +94,7 @@ class Result(Generic[T]):
 
     def __add__(self, other: Result[Any]) -> Result[T]:
         r: Result[T] = Result(
+            name=self.name,
             value=self.value,
             errors=self.errors + other.errors,
             records=[*self.records, *other.records],
