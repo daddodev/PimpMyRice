@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf8") as f:
 
 setuptools.setup(
     name="pimpmyrice",
-    version="0.2.0",
+    version="0.2.1",
     author="daddodev",
     author_email="daddodev@gmail.com",
     description="The overkill rice manager",
