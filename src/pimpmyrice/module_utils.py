@@ -211,6 +211,7 @@ class WaitForAction(BaseModel):
 
         try:
             res.debug(f'waiting for module "{self.module}"...')
+            # TODO add timeout
             while not modules_state[self.module]["done"]:
                 await asyncio.sleep(0.1)
             res.debug(f'done waiting for module "{self.module}"')

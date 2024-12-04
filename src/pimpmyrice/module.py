@@ -118,10 +118,6 @@ class ModuleManager:
 
             for t in asyncio.as_completed(tasks):
                 task_res = await t
-                if isinstance(task_res, Exception):
-                    module_res = Result(name="how did this happen")
-                    module_res.exception(task_res)
-
                 if isinstance(task_res, Result):
                     if task_res.name:
                         modules_state[task_res.name]["done"] = True

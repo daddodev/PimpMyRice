@@ -9,6 +9,15 @@ I heard you like ricing, so I made a ricer for your rices.
 **[<kbd>Documentation</kbd>](https://pimpmyrice.vercel.app/docs)** 
 **[<kbd>Starter modules</kbd>](https://pimpmyrice.vercel.app/modules)** 
 
+#### See it in action:
+
+<iframe width="560" height="315"
+src="https://www.youtube.com/embed/Z0MnaKWo25U" 
+frameborder="0" 
+allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" 
+allowfullscreen></iframe>
+
+
 ## ❓ What is a rice?
 
 > Ricing refers to the process of customizing the visual appearance and functionality of a desktop environment, usually in Linux or Unix-based systems.<br />
@@ -16,6 +25,7 @@ It involves tweaking themes, icons, fonts, and configurations to achieve a uniqu
 A well-customized setup, called a "rice", showcases the user's attention to detail, personality and creativity.
 
 Take a look at [r/unixporn](https://www.reddit.com/r/unixporn) for inspiration.
+
 
 ## 🤔 What does PimpMyRice do?
 
@@ -26,11 +36,18 @@ See [overview](https://pimpmyrice.vercel.app/docs/overview) for more information
 
 ### ⚙️ Features
 
-- 🧩 Easily extendable
-- 📝 Autocomplete in editor and terminal (only zsh for now)
-- 🌈 Color extraction (alpha)
-- 🔗 [Server with API](https://github.com/daddodev/pimpmyrice_server) (alpha)
-- 🖼️ GUI (coming soon)
+- 🚀 Easy to get started
+- 🛠️ Infinitely customizable
+- 📜 Powerful [file](https://pimpmyrice.vercel.app/docs/module#file) and [shell command](https://pimpmyrice.vercel.app/docs/module#shell) templating using [Jinja](https://jinja.palletsprojects.com/en/3.1.x/templates/)
+- 🐍 [Extendable through Python](https://pimpmyrice.vercel.app/docs/module#python)
+- ⚡ Fast enough
+- 📝 Autocomplete in editor and terminal*
+- 🌈 Color extraction*
+- 🔗 [Server with API](https://github.com/daddodev/pimpmyrice_server)*
+- 🖼️ GUI (coming soon™)
+
+_*WIP_
+
 
 ## 🚀 Quick start
 
@@ -44,7 +61,7 @@ pipx install pimpmyrice
 
 ### 📦 Add some modules
 
-[Create your own modules](https://pimpmyrice.vercel.app/docs/module#create-a-module) from scratch or clone from the [starter modules](https://pimpmyrice.vercel.app/modules) to get started.
+[Create your own modules](https://pimpmyrice.vercel.app/docs/module) from scratch or clone from the [starter modules](https://pimpmyrice.vercel.app/modules) to get started.
 
 For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacritty) module:
 

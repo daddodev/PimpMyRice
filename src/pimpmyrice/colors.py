@@ -53,6 +53,16 @@ class Color(PydanticColor):
         )
 
     @property
+    def rgb(self) -> tuple[int, int, int]:
+        rgb = self.as_rgb_tuple(alpha=False)[:3]
+        return rgb
+
+    @property
+    def rgb_string(self) -> str:
+        rgb = self.as_rgb()
+        return rgb
+
+    @property
     def hsl(self) -> tuple[int, int, int]:
         return self.hue, self.saturation, self.lightness
 
@@ -100,11 +110,6 @@ class Color(PydanticColor):
     # @property
     # def hsl(self) -> tuple[int, float, float]:
     #     return clr
-
-    @property
-    def rgb(self) -> str:
-        clr = self.as_rgb()
-        return clr
 
     def __str__(self) -> str:
         return self.hex
