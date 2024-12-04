@@ -159,7 +159,7 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
         if apply := args["--apply"]:
             a["apply"] = apply
 
-        for img in args["IMAGES"]:
+        for img in args["IMAGE"]:
             r = await tm.generate_theme(image=img, **a)
             res += r
 
