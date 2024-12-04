@@ -11,11 +11,7 @@ I heard you like ricing, so I made a ricer for your rices.
 
 #### See it in action:
 
-<iframe width="560" height="315"
-src="https://www.youtube.com/embed/Z0MnaKWo25U" 
-frameborder="0" 
-allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" 
-allowfullscreen></iframe>
+[![showcase_video](video_thumbnail.png)](https://www.youtube.com/watch?v=Z0MnaKWo25U)
 
 
 ## ❓ What is a rice?
