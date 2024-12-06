@@ -12,9 +12,10 @@ from infi.docopt_completion.common import (
     get_options_descriptions,
 )
 from infi.docopt_completion.docopt_completion import _autodetect_generators
+from infi.docopt_completion.zsh import ZshCompletion
 from pydantic import BaseModel, create_model
 
-from pimpmyrice.config import JSON_SCHEMA_DIR
+from pimpmyrice.config import HOME_DIR, JSON_SCHEMA_DIR
 from pimpmyrice.doc import __doc__ as cli_doc
 from pimpmyrice.files import save_json
 from pimpmyrice.logger import get_logger
@@ -168,32 +169,23 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
     build_command_tree(pattern, param_tree)
     option_help = dict(list(get_options_descriptions(doc)))
 
-    generators_to_use = _autodetect_generators()
-    for generator in generators_to_use:
-        content = generator.get_completion_file_content("pimp", param_tree, option_help)
+    generator = ZshCompletion()
 
-        content = add_zsh_suggestions(content, "theme", [*tm.themes.keys()])
-        content = add_zsh_suggestions(content, "module", [*tm.mm.modules.keys()])
-        content = add_zsh_suggestions(content, "--tags", list(tm.tags))
-        content = add_zsh_suggestions(content, "IMAGE", [])
+    content = generator.get_completion_file_content("pimp", param_tree, option_help)
 
-        file_paths = generator.get_completion_filepath("pimp")
-        if not isinstance(file_paths, Generator):
-            file_paths = [file_paths]
-        for file_path in file_paths:
-            if not os.access(os.path.dirname(file_path), os.W_OK):
-                log.debug(
-                    "Skipping file {file_path}, no permissions".format(
-                        file_path=file_path
-                    )
-                )
-                return
-            try:
-                with open(file_path, "w") as fd:
-                    fd.write(content)
-            except IOError:
-                log.debug("Failed to write {file_path}".format(file_path=file_path))
-                return
-            log.debug(
-                "Completion file written to {file_path}".format(file_path=file_path)
-            )
+    content = add_zsh_suggestions(content, "theme", [*tm.themes.keys()])
+    content = add_zsh_suggestions(content, "module", [*tm.mm.modules.keys()])
+    content = add_zsh_suggestions(content, "--tags", list(tm.tags))
+    content = add_zsh_suggestions(content, "IMAGE", [])
+
+    file_path = HOME_DIR / ".zsh/functions/Completion/_pimp"
+    if not file_path.parent.exists():
+        file_path.parent.mkdir(parents=True)
+
+    try:
+        with open(file_path, "w") as fd:
+            fd.write(content)
+    except IOError:
+        log.debug("Failed to write {file_path}".format(file_path=file_path))
+        return
+    log.debug("Completion file written to {file_path}".format(file_path=file_path))
