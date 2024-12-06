@@ -159,6 +159,10 @@ def add_zsh_suggestions(file_content: str, arg_name: str, values: list[str]) -> 
 
 
 def generate_shell_suggestions(tm: ThemeManager) -> None:
+    file_path = HOME_DIR / ".cache/oh-my-zsh/completions/_pimp"
+
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
     # TODO fork docopt_completion
 
     doc = cli_doc
@@ -177,10 +181,6 @@ def generate_shell_suggestions(tm: ThemeManager) -> None:
     content = add_zsh_suggestions(content, "module", [*tm.mm.modules.keys()])
     content = add_zsh_suggestions(content, "--tags", list(tm.tags))
     content = add_zsh_suggestions(content, "IMAGE", [])
-
-    file_path = HOME_DIR / ".zsh/functions/Completion/_pimp"
-    if not file_path.parent.exists():
-        file_path.parent.mkdir(parents=True)
 
     try:
         with open(file_path, "w") as fd:
