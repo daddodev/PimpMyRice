@@ -13,25 +13,25 @@ class Os(str, Enum):
         return self.value
 
 
-HOME_DIR = Path.home()
-
+if os.environ.get("PIMP_TESTING"):
+    HOME_DIR = Path("./tests/files/")
+else:
+    HOME_DIR = Path.home()
 
 match sys.platform:
     case "win32":
         CLIENT_OS = Os.WINDOWS
         CONFIG_DIR = HOME_DIR / "AppData/Roaming"
+        PIMP_CONFIG_DIR = HOME_DIR / "pimpmyrice"
     case "linux":
         CLIENT_OS = Os.LINUX
         CONFIG_DIR = HOME_DIR / ".config"
+        PIMP_CONFIG_DIR = CONFIG_DIR / "pimpmyrice"
     case "darwin":
         CLIENT_OS = Os.MAC
         CONFIG_DIR = HOME_DIR / "Library/Application Support"
+        PIMP_CONFIG_DIR = HOME_DIR / "pimpmyrice"
 
-if os.environ.get("PIMP_TESTING"):
-    PIMP_CONFIG_DIR = Path("./tests/files/pimpmyrice")
-    CONFIG_DIR = Path("./tests/files/config")
-else:
-    PIMP_CONFIG_DIR = HOME_DIR / "pimpmyrice"
 
 PIMP_DIR = Path(os.path.abspath(os.path.join(__file__, "../../")))
 VENV_DIR = PIMP_CONFIG_DIR / "venv"
