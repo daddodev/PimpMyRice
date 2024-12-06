@@ -34,6 +34,10 @@ Usage:
     pimp edit module MODULE [options]
     pimp regen [--name=NAME] [options]
     pimp rewrite (themes|modules) [--name=NAME] [options]
+    pimp export theme THEME OUT_DIR     [--mode=MODE] [--modules=MODULES]
+                                        [--exclude-modules=MODULES] [--style=STYLE]
+                                        [--palette=PALETTE] [--print-theme-dict]
+                                        [options]
     pimp info [options]
     pimp --help
 

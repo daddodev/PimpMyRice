@@ -6,6 +6,7 @@ from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     ItemsView,
     KeysView,
@@ -23,7 +24,11 @@ from pimpmyrice import files
 from pimpmyrice.colors import Color, LinkPalette, Palette, exp_gen_palette
 from pimpmyrice.config import JSON_SCHEMA_DIR
 from pimpmyrice.logger import get_logger
+from pimpmyrice.module_utils import FileAction, Module
 from pimpmyrice.utils import AttrDict, DictOrAttrDict, Result, get_thumbnail
+
+if TYPE_CHECKING:
+    from pimpmyrice.theme import ThemeManager
 
 log = get_logger(__name__)
 
@@ -176,16 +181,77 @@ def resolve_refs(
 
 
 def gen_theme_dict(
-    theme: Theme,
-    base_style: dict[str, Any],
+    tm: ThemeManager,
+    theme_name: str,
     mode_name: str,
-    palette: Palette,
-    styles: list[Style] | None = None,
-) -> AttrDict:
+    palette_name: str | None = None,
+    styles_names: list[str] | None = None,
+) -> Result[AttrDict]:
+
+    res: Result[AttrDict] = Result()
+
+    theme = tm.themes[theme_name]
+
+    if mode_name not in theme.modes:
+        new_mode = [*theme.modes.keys()][0]
+        res.warning(f'"{mode_name}" mode not present in theme, applying "{new_mode}"')
+        mode_name = new_mode
+
+    styles: list[Style] = []
+
+    if theme.style:
+        if from_global := theme.style.get("from_global"):
+            if from_global not in tm.styles:
+                return res.error(
+                    f'global style "{from_global}" not found in {list(tm.styles)}'
+                )
+            theme_style = AttrDict(**tm.styles[from_global]) + theme.style
+            styles.append(theme_style)
+        else:
+            styles.append(theme.style)
+
+    if mode_style := theme.modes[mode_name].style:
+        if from_global := mode_style.get("from_global"):
+            if from_global not in tm.styles:
+                return res.error(
+                    f'global style "{from_global}" not found in {list(tm.styles)}'
+                )
+            mode_style = AttrDict(**tm.styles[from_global]) + mode_style
+
+        styles.append(mode_style)
+
+    if styles_names:
+        for style in styles_names:
+            if style not in tm.styles:
+                return res.error(
+                    f'global style "{style}" not found in {list(tm.styles)}'
+                )
+            styles.append(tm.styles[style])
+
+    palette: Palette
+    if palette_name:
+        if palette_name in tm.palettes:
+            palette = tm.palettes[palette_name]
+        else:
+            return res.error(f'palette "{palette_name}" not found')
+    else:
+        mode_palette = theme.modes[mode_name].palette
+        if isinstance(mode_palette, LinkPalette):
+            from_global = mode_palette.from_global
+
+            if from_global not in tm.palettes:
+                return res.error(
+                    f'global style "{from_global}" not found in {list(tm.palettes)}'
+                )
+
+            palette = tm.palettes[from_global]
+        else:
+            palette = mode_palette
+
     theme = deepcopy(theme)
     styles = deepcopy(styles)
     palette = palette.copy()
-    base_style = deepcopy(base_style)
+    base_style = deepcopy(tm.base_style)
 
     theme_dict = AttrDict(palette.model_dump())
 
@@ -202,8 +268,8 @@ def gen_theme_dict(
         theme_dict += theme.modes[mode_name].style
 
     if styles:
-        for style in styles:
-            theme_dict += style
+        for s in styles:
+            theme_dict += s
 
     theme_dict, pending = resolve_refs(theme_dict)
     while len(pending) > 0:
@@ -213,8 +279,12 @@ def gen_theme_dict(
             break
 
     for p in pending:
-        log.error(f'keyword reference for "{p}" not found')
-    return theme_dict
+        res.error(f'keyword reference for "{p}" not found')
+
+    res.value = theme_dict
+
+    res.ok = True
+    return res
 
 
 def valid_theme_name(name: str, themes: dict[str, Theme]) -> str:

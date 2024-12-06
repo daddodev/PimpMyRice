@@ -79,10 +79,12 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
     options = {
         "mode_name": args["--mode"],
-        "styles_names": args["--style"],
         "palette_name": args["--palette"],
         "print_theme_dict": args["--print-theme-dict"],
     }
+
+    if styles_names := args["--style"]:
+        options["styles_names"] = styles_names.split(",")
 
     if modules := args["--modules"]:
         options["include_modules"] = modules.split(",")
@@ -113,6 +115,10 @@ async def process_args(tm: ThemeManager, args: dict[str, Any]) -> Result:
 
         elif args["delete"]:
             return tm.delete_theme(args["THEME"])
+        elif args["export"]:
+            return await tm.export_theme(
+                args["THEME"], out_dir=Path(args["OUT_DIR"]).absolute(), **options
+            )
 
     elif args["module"]:
         if args["clone"]:

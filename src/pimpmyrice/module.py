@@ -51,8 +51,13 @@ class ModuleManager:
         theme_dict: AttrDict,
         include_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
-    ) -> Result:
-        res = Result()
+        out_dir: Path | None = None,
+    ) -> Result[set[str]]:
+
+        res: Result[set[str]] = Result()
+
+        executed_modules: set[str] = set()
+
         timer = Timer()
 
         for m in [*(include_modules or []), *(exclude_modules or [])]:
@@ -108,11 +113,14 @@ class ModuleManager:
                     res.info(
                         f"modifier applied in {mod_timer.elapsed():.2f} seconds", name
                     )
+                    executed_modules.add(name)
 
             modules_state = {m: {"done": False} for m in self.modules}
 
             tasks = [
-                self.modules[name].execute_run(theme_dict, modules_state=modules_state)
+                self.modules[name].execute_run(
+                    theme_dict, modules_state=modules_state, out_dir=out_dir
+                )
                 for name in runners
             ]
 
@@ -120,6 +128,7 @@ class ModuleManager:
                 task_res = await t
                 if isinstance(task_res, Result):
                     if task_res.name:
+                        executed_modules.add(task_res.name)
                         modules_state[task_res.name]["done"] = True
                     else:
                         task_res.error(f"Result has no name")
@@ -134,6 +143,8 @@ class ModuleManager:
             res.info(
                 f"{len({*pre_runners, *runners})} modules applied in {timer.elapsed():.2f} sec"
             )
+
+            res.value = executed_modules
 
             res.ok = True
             return res

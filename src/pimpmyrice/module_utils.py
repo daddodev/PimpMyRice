@@ -21,7 +21,7 @@ from pydantic.json_schema import SkipJsonSchema
 from typing_extensions import Annotated
 
 from pimpmyrice import files, utils
-from pimpmyrice.config import CLIENT_OS, MODULES_DIR, TEMP_DIR, Os
+from pimpmyrice.config import CLIENT_OS, HOME_DIR, MODULES_DIR, TEMP_DIR, Os
 from pimpmyrice.logger import get_logger
 from pimpmyrice.utils import AttrDict, Result, Timer, parse_string_vars
 
@@ -107,7 +107,7 @@ class FileAction(BaseModel):
             data["template"] = template_path
         return data
 
-    async def run(self, theme_dict: AttrDict) -> Result:
+    async def run(self, theme_dict: AttrDict, out_dir: Path | None = None) -> Result:
         res = Result()
 
         try:
@@ -127,6 +127,12 @@ class FileAction(BaseModel):
                     theme_dict=theme_dict,
                 )
             )
+
+            if out_dir:
+                if target.is_relative_to(HOME_DIR):
+                    target = out_dir / target.relative_to(HOME_DIR)
+                else:
+                    target = out_dir / target
 
             if not target.parent.exists():
                 target.parent.mkdir(parents=True)
@@ -371,7 +377,10 @@ class Module(BaseModel):
             return res
 
     async def execute_run(
-        self, theme_dict: AttrDict, modules_state: dict[str, Any]
+        self,
+        theme_dict: AttrDict,
+        modules_state: dict[str, Any],
+        out_dir: Path | None = None,
     ) -> Result:
         res = Result(name=self.name)
         timer = Timer()
@@ -382,6 +391,24 @@ class Module(BaseModel):
             if self.name in theme_dict["modules_styles"]
             else deepcopy(theme_dict)
         )
+
+        if out_dir:
+            for action in self.run:
+                if isinstance(action, FileAction):
+                    try:
+                        action_res = await action.run(theme_dict, out_dir=out_dir)
+                    except Exception as e:
+                        res.exception(e, f"{action} encountered an error:", self.name)
+                        break
+
+                    res += action_res
+                    if not action_res.ok:
+                        res.debug(f"interrupted because res.ok is false:\n{action_res}")
+                        break
+                else:
+                    res.debug(f"dumping {action} not implemented, skipping")
+
+            return res
 
         for action in self.run:
             try:

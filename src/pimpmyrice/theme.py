@@ -298,8 +298,8 @@ class ThemeManager:
         self,
         theme_name: str | None = None,
         mode_name: str | None = None,
-        styles_names: str | None = None,
         palette_name: str | None = None,
+        styles_names: list[str] | None = None,
         include_modules: list[str] | None = None,
         exclude_modules: list[str] | None = None,
         print_theme_dict: bool = False,
@@ -316,79 +316,27 @@ class ThemeManager:
         if not mode_name:
             mode_name = self.config.mode
 
-        theme = self.themes[theme_name]
-
-        if mode_name not in theme.modes:
-            new_mode = [*theme.modes.keys()][0]
-            res.warning(
-                f'"{mode_name}" mode not present in theme, applying "{new_mode}"'
-            )
-            mode_name = new_mode
-
-        styles: list[Style] = []
-
-        if theme.style:
-            if from_global := theme.style.get("from_global"):
-                if from_global not in self.styles:
-                    return res.error(
-                        f'global style "{from_global}" not found in {list(self.styles)}'
-                    )
-                theme_style = AttrDict(**self.styles[from_global]) + theme.style
-                styles.append(theme_style)
-            else:
-                styles.append(theme.style)
-
-        if mode_style := theme.modes[mode_name].style:
-            if from_global := mode_style.get("from_global"):
-                if from_global not in self.styles:
-                    return res.error(
-                        f'global style "{from_global}" not found in {list(self.styles)}'
-                    )
-                mode_style = AttrDict(**self.styles[from_global]) + mode_style
-
-            styles.append(mode_style)
-
-        if styles_names:
-            for style in styles_names.split(","):
-                if style not in self.styles:
-                    return res.error(
-                        f'global style "{style}" not found in {list(self.styles)}'
-                    )
-                styles.append(self.styles[style])
-
-        palette: Palette
-        if palette_name:
-            if palette_name in self.palettes:
-                palette = self.palettes[palette_name]
-            else:
-                return res.error(f'palette "{palette_name}" not found')
-        else:
-            mode_palette = theme.modes[mode_name].palette
-            if isinstance(mode_palette, LinkPalette):
-                from_global = mode_palette.from_global
-
-                if from_global not in self.palettes:
-                    return res.error(
-                        f'global style "{from_global}" not found in {list(self.palettes)}'
-                    )
-
-                palette = self.palettes[from_global]
-            else:
-                palette = mode_palette
-
-        theme_dict = tutils.gen_theme_dict(
-            theme=theme,
-            base_style=self.base_style,
+        r = tutils.gen_theme_dict(
+            self,
+            theme_name=theme_name,
             mode_name=mode_name,
-            styles=styles,
-            palette=palette,
+            styles_names=styles_names,
+            palette_name=palette_name,
         )
+        res += r
+
+        if not r.value:
+            return res.error(
+                f'error generating the theme_dict for theme "{theme_name}"'
+            )
+
+        theme_dict = r.value
 
         if print_theme_dict:
             pretty = rich.pretty.pretty_repr(theme_dict)
             res.info("generated theme_dict:\r\n" + pretty)
 
-        res.info(f'applying theme "{theme.name}"...')
+        res.info(f'applying theme "{theme_name}"...')
 
         modules_res = await self.mm.run_modules(
             theme_dict, include_modules, exclude_modules
@@ -414,7 +362,7 @@ class ThemeManager:
     async def set_random_theme(
         self,
         mode_name: str | None = None,
-        styles_names: str | None = None,
+        styles_names: list[str] | None = None,
         palette_name: str | None = None,
         name_includes: str | None = None,
         include_modules: list[str] | None = None,
@@ -551,6 +499,85 @@ class ThemeManager:
 
         for style in self.styles:
             res.info(f"{style}")
+
+        res.ok = True
+        return res
+
+    async def export_theme(
+        self,
+        theme_name: str,
+        out_dir: Path,
+        mode_name: str | None = None,
+        palette_name: str | None = None,
+        styles_names: list[str] | None = None,
+        include_modules: list[str] | None = None,
+        exclude_modules: list[str] | None = None,
+        print_theme_dict: bool = False,
+    ) -> Result:
+
+        res = Result()
+
+        if theme_name not in self.themes:
+            return res.error(f'theme "{theme_name}" not found')
+
+        if not mode_name:
+            mode_name = self.config.mode
+
+        dump_dir = out_dir / f"{theme_name}_{mode_name}"
+
+        if dump_dir.exists():
+            return res.error(f'directory "{dump_dir}" already exists')
+
+        gen_res = tutils.gen_theme_dict(
+            self,
+            theme_name=theme_name,
+            mode_name=mode_name,
+            styles_names=styles_names,
+            palette_name=palette_name,
+        )
+        res += gen_res
+
+        if not gen_res.value:
+            return res.error(
+                f'error generating the theme_dict for theme "{theme_name}"'
+            )
+        theme_dict = gen_res.value
+
+        if print_theme_dict:
+            pretty = rich.pretty.pretty_repr(theme_dict)
+            res.info("generated theme_dict:\r\n" + pretty)
+
+        modules_res = await self.mm.run_modules(
+            theme_dict, include_modules, exclude_modules, dump_dir
+        )
+
+        res += modules_res
+        if not modules_res.value:
+            return res.error(f'error exporting theme "{theme_name}"')
+
+        theme = self.themes[theme_name]
+
+        wp = theme.modes[mode_name].wallpaper
+        if not wp:
+            return res
+
+        shutil.copy(wp.path, dump_dir)
+
+        readme = f"""# "{theme_name}" {mode_name} theme dotfiles
+
+Dump generated with [pimp](https://github.com/daddodev/pimpmyrice) `export theme`
+
+## Requirements:
+
+"""
+
+        for module_name in modules_res.value:
+            readme += f"- {module_name}\n"
+
+        with open(dump_dir / "README.md", "w") as f:
+            f.write(readme)
+
+        res.success(f'theme "{theme_name}" exported to {dump_dir}')
 
         res.ok = True
         return res
