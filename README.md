@@ -65,6 +65,10 @@ For example, clone the [alacritty](https://github.com/pimpmyrice-modules/alacrit
 pimp clone module pimp://alacritty
 ```
 
+Delete a module:
+```bash
+pimp delete module alacritty
+```
 ### 🎨 Generate and apply a new theme
 
 Generate a theme from an image:
@@ -86,6 +90,7 @@ Delete a theme:
 ```bash
 pimp delete theme example
 ```
+
 
 ### 🌟 Start ricing
 
