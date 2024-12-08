@@ -81,6 +81,11 @@ Set the generated theme:
 pimp set theme example
 ```
 
+Delete a theme:
+
+```bash
+pimp delete theme example
+```
 
 ### 🌟 Start ricing
 
