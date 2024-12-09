@@ -35,7 +35,7 @@ def save_yaml(file: Path, data: dict[str, Any]) -> None:
     dump = yaml.dump(data, indent=4, default_flow_style=False)
 
     if file.name in ("module.yaml", "theme.yaml"):
-        schema_str = f"# yaml-language-server: $schema=../../.json_schemas/{file.name.split(".")[0]}.json\n\n"
+        schema_str = f'# yaml-language-server: $schema=../../.json_schemas/{file.name.split(".")[0]}.json\n\n'
         dump = schema_str + dump
 
     with open(file, "w") as f:

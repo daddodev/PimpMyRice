@@ -6,7 +6,7 @@ from collections.abc import MutableMapping
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Generic, Self
+from typing import Any, Generic
 
 import cv2
 import jinja2
@@ -52,30 +52,30 @@ class Result(Generic[T]):
             log._log(level=record.level.value, msg=record.msg, args={})
         self.records.append(record)
 
-    def debug(self, msg: str, name: str | None = None) -> Self:
+    def debug(self, msg: str, name: str | None = None) -> Result[T]:
         self.__log(ResultRecord(msg, LogLevel.DEBUG), name)
         return self
 
-    def info(self, msg: str, name: str | None = None) -> Self:
+    def info(self, msg: str, name: str | None = None) -> Result[T]:
         self.__log(ResultRecord(msg, LogLevel.INFO), name)
         return self
 
-    def success(self, msg: str, name: str | None = None) -> Self:
+    def success(self, msg: str, name: str | None = None) -> Result[T]:
         self.__log(ResultRecord(msg, LogLevel.SUCCESS), name)
         return self
 
-    def warning(self, msg: str, name: str | None = None) -> Self:
+    def warning(self, msg: str, name: str | None = None) -> Result[T]:
         self.__log(ResultRecord(msg, LogLevel.WARNING), name)
         return self
 
-    def error(self, msg: str, name: str | None = None) -> Self:
+    def error(self, msg: str, name: str | None = None) -> Result[T]:
         self.__log(ResultRecord(msg, LogLevel.ERROR), name)
         self.errors += 1
         return self
 
     def exception(
         self, exception: Exception, message: str | None = None, name: str | None = None
-    ) -> Self:
+    ) -> Result[T]:
         exc_str = str(exception).strip()
 
         if message:

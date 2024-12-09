@@ -233,7 +233,7 @@ class ModuleManager:
                 if isinstance(source, Path):
                     name = await mutils.clone_from_folder(source)
                 elif source.startswith("pimp://"):
-                    url = f"{REPOS_BASE_ADDR}/{source.removeprefix("pimp://")}"
+                    url = f'{REPOS_BASE_ADDR}/{source.removeprefix("pimp://")}'
                     name = await mutils.clone_from_git(url)
                 else:
                     name = await mutils.clone_from_git(source)

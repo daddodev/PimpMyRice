@@ -135,7 +135,7 @@ class FileAction(BaseModel):
                     target = out_dir / target
 
             if not target.parent.exists():
-                target.parent.mkdir(parents=True)
+                target.parent.mkdir(parents=True, exist_ok=True)
 
             with open(template, "r") as f:
                 data = f.read()
@@ -257,8 +257,7 @@ class IfRunningAction(BaseModel):
             return res
 
     def __str__(self) -> str:
-        return f'if "{self.program_name}" {"running" if self.should_be_running
-                                           else "not running"}'
+        return f'if "{self.program_name}" {"running" if self.should_be_running else "not running"}'
 
 
 class LinkAction(BaseModel):

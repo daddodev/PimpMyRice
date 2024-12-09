@@ -14,7 +14,7 @@ def create_venv() -> None:
 
 
 async def install_in_venv(packages: list[str]) -> None:
-    cmd = f"{VENV_PIP_PATH} install {",".join(packages)}"
+    cmd = f'{VENV_PIP_PATH} install {",".join(packages)}'
     res, err = await run_shell_command(cmd)
     print(res)
     print(err)
