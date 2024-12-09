@@ -34,6 +34,7 @@ async def cli() -> None:
         except ImportError:
             log.error("PimpMyRice server is not installed")
             log.error("https://github.com/daddodev/pimpmyrice_server#install")
+            return
 
         send_to_server(args)
     else:
