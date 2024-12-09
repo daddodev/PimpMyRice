@@ -49,6 +49,14 @@ _*WIP_
 
 ### 📥 Install
 
+#### Arch Linux
+
+```bash
+yay -S pimpmyrice
+# or
+yay -S pimpmyrice-git
+```
+
 #### Pipx
 
 ```bash
@@ -69,6 +77,7 @@ Delete a module:
 ```bash
 pimp delete module alacritty
 ```
+
 ### 🎨 Generate and apply a new theme
 
 Generate a theme from an image:
@@ -90,7 +99,6 @@ Delete a theme:
 ```bash
 pimp delete theme example
 ```
-
 
 ### 🌟 Start ricing
 
