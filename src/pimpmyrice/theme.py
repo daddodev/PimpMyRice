@@ -14,6 +14,7 @@ from pimpmyrice.colors import (
     exp_gen_palette,
     get_palettes,
 )
+from pimpmyrice.completions import generate_shell_suggestions
 from pimpmyrice.config import BASE_STYLE_FILE, CONFIG_FILE, STYLES_DIR, THEMES_DIR
 from pimpmyrice.events import EventHandler
 from pimpmyrice.files import (
@@ -48,7 +49,7 @@ class ThemeManager:
         try:
             schemas.generate_theme_json_schema(self)
             schemas.generate_module_json_schema()
-            schemas.generate_shell_suggestions(self)
+            generate_shell_suggestions(self)
         except Exception as e:
             log.exception(e)
             log.error("failed to generate suggestions")

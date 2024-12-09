@@ -5,14 +5,6 @@ import re
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generator
 
-from docopt import formal_usage, parse_defaults, parse_pattern, printable_usage
-from infi.docopt_completion.common import (
-    CommandParams,
-    build_command_tree,
-    get_options_descriptions,
-)
-from infi.docopt_completion.docopt_completion import _autodetect_generators
-from infi.docopt_completion.zsh import ZshCompletion
 from pydantic import BaseModel, create_model
 
 from pimpmyrice.config import HOME_DIR, JSON_SCHEMA_DIR
@@ -106,86 +98,3 @@ def generate_module_json_schema() -> Result:
     save_json(schema_path, module_schema)
 
     return res.debug(f'module schema saved to "{schema_path}"')
-
-
-def add_zsh_suggestions(file_content: str, arg_name: str, values: list[str]) -> str:
-    if arg_name == "--tags":
-        replaced = ""
-
-        found_tags = False
-        for i, line in enumerate(file_content.splitlines()):
-            if "(--tags=-)--tags=-" in line:
-                found_tags = True
-                line = "		'--tags=:flag:->flags' \\"
-            elif "}" in line and found_tags:
-                found_tags = False
-                line = f"""
-    case "$state" in flags)
-        _values -s , 'flags' {" ".join(f'"{x}"' for x in values)}
-    esac
-}}
-"""
-
-            replaced += line + "\n"
-
-    elif arg_name == "IMAGE":
-
-        replaced = file_content.replace(
-            f"""
-        myargs=('{arg_name.upper()}')
-        _message_next_arg
-""",
-            f"""
-        myargs=('{arg_name.upper()}')
-        _files
-""",
-        )
-    else:
-
-        replaced = file_content.replace(
-            f"""
-        myargs=('{arg_name.upper()}')
-        _message_next_arg
-""",
-            f"""
-        local -a available_{arg_name}s
-        available_{arg_name}s=({" ".join(f'"{x}"' for x in values)})
-
-        _describe '{arg_name} name' available_{arg_name}s
-""",
-        )
-
-    return replaced
-
-
-def generate_shell_suggestions(tm: ThemeManager) -> None:
-    file_path = HOME_DIR / ".cache/oh-my-zsh/completions/_pimp"
-
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # TODO fork docopt_completion
-
-    doc = cli_doc
-
-    options = parse_defaults(doc)
-    pattern = parse_pattern(formal_usage(printable_usage(doc)), options)
-    param_tree = CommandParams()
-    build_command_tree(pattern, param_tree)
-    option_help = dict(list(get_options_descriptions(doc)))
-
-    generator = ZshCompletion()
-
-    content = generator.get_completion_file_content("pimp", param_tree, option_help)
-
-    content = add_zsh_suggestions(content, "theme", [*tm.themes.keys()])
-    content = add_zsh_suggestions(content, "module", [*tm.mm.modules.keys()])
-    content = add_zsh_suggestions(content, "--tags", list(tm.tags))
-    content = add_zsh_suggestions(content, "IMAGE", [])
-
-    try:
-        with open(file_path, "w") as fd:
-            fd.write(content)
-    except IOError:
-        log.debug("Failed to write {file_path}".format(file_path=file_path))
-        return
-    log.debug("Completion file written to {file_path}".format(file_path=file_path))
