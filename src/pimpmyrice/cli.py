@@ -29,7 +29,11 @@ async def cli() -> None:
     server_running, server_pid = is_locked(SERVER_PID_FILE)
 
     if server_running:
-        from pimpmyrice_server.api import send_to_server
+        try:
+            from pimpmyrice_server.api import send_to_server
+        except ImportError:
+            log.error("PimpMyRice server is not installed")
+            log.error("https://github.com/daddodev/pimpmyrice_server#install")
 
         send_to_server(args)
     else:
