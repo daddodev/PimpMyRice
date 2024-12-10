@@ -6,8 +6,7 @@ _This project is currently in beta and may be subject to breaking changes._
 
 I heard you like ricing, so I made a ricer for your rices.
 
-**[<kbd>Documentation</kbd>](https://pimpmyrice.vercel.app/docs)** 
-**[<kbd>Starter modules</kbd>](https://pimpmyrice.vercel.app/modules)** 
+[📄 Documentation](https://pimpmyrice.vercel.app/docs) ║ [📦 Starter Modules](https://pimpmyrice.vercel.app/modules) ║ [💬 Discord](https://discord.gg/TDrSB2wk6c)
 
 #### See it in action:
 
