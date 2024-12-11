@@ -332,15 +332,12 @@ class Module(BaseModel):
 
         try:
             action_res = await self.commands[command_name].run(tm=tm, *args, **kwargs)
-            res += action_res
-            if not action_res.ok:
-                return res
-
         except Exception as e:
             return res.exception(
                 e, f'command "{command_name}" encountered an error:', self.name
             )
 
+        res += action_res
         return res
 
     async def execute_init(self) -> Result:
@@ -391,6 +388,7 @@ class Module(BaseModel):
             else deepcopy(theme_dict)
         )
 
+        # output to custom directory (needed for testing)
         if out_dir:
             for action in self.run:
                 if isinstance(action, FileAction):

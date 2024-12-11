@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generator
 
 from pydantic import BaseModel, create_model
 
-from pimpmyrice.config import HOME_DIR, JSON_SCHEMA_DIR
+from pimpmyrice.config import CLIENT_OS, HOME_DIR, JSON_SCHEMA_DIR, Os
 from pimpmyrice.doc import __doc__ as cli_doc
 from pimpmyrice.files import save_json
 from pimpmyrice.logger import get_logger
@@ -33,6 +34,24 @@ def create_dynamic_model(name: str, source: dict[str, Any]) -> BaseModel:
     model: BaseModel = create_model(name, **fields)
 
     return model
+
+
+def get_fonts(mono: bool = False) -> list[str]:
+    # TODO windows
+    if CLIENT_OS == Os.WINDOWS:
+        log.warning("getting font list not yet supported on Windows")
+        return []
+
+    try:
+        output = subprocess.check_output(
+            ["fc-list", ":spacing=mono" if mono else ":family"], text=True
+        )
+        font_names = [line.split(":")[1].strip() for line in output.splitlines()]
+        return sorted(set(font_names))
+
+    except FileNotFoundError:
+        log.warning("fontconfig not installed")
+        return []
 
 
 def generate_theme_json_schema(tm: ThemeManager) -> Result:
@@ -66,6 +85,32 @@ def generate_theme_json_schema(tm: ThemeManager) -> Result:
         "uniqueItems": True,
     }
 
+    normal_fonts = get_fonts()
+    normal_font_schema = {
+        "anyOf": [
+            {"type": "string"},
+            {
+                "const": "",
+                "enum": normal_fonts,
+                "type": "string",
+            },
+        ],
+        "title": "Normal font",
+    }
+
+    mono_fonts = get_fonts(mono=True)
+    mono_font_schema = {
+        "anyOf": [
+            {"type": "string"},
+            {
+                "const": "",
+                "enum": mono_fonts,
+                "type": "string",
+            },
+        ],
+        "title": "Mono font",
+    }
+
     theme_schema["properties"]["tags"] = tags_schema
 
     theme_schema["$defs"] = {**theme_schema["$defs"], **style_schema["$defs"]}
@@ -77,6 +122,9 @@ def generate_theme_json_schema(tm: ThemeManager) -> Result:
     theme_schema["$defs"]["Mode"]["properties"]["style"] = {"$ref": "#/$defs/Style"}
 
     theme_schema["properties"]["style"] = {"$ref": "#/$defs/Style"}
+
+    theme_schema["$defs"]["Style_font"]["properties"]["normal"] = normal_font_schema
+    theme_schema["$defs"]["Style_font"]["properties"]["mono"] = mono_font_schema
 
     theme_schema["properties"].pop("name")
     theme_schema["properties"].pop("path")

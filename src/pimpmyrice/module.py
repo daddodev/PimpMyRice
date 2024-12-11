@@ -180,31 +180,8 @@ class ModuleManager:
             try:
                 dump = module.model_dump(mode="json")
 
-                edited = {}
-                for group_name, group in dump.items():
-                    if group_name == "run":
-                        for action in group:
-                            if "template" in action:
-                                if len(Path(action["template"]).parts) > 1:
-                                    continue
-
-                                template_path = Path(action["template"]).name
-                                target_stem = Path(action["target"]).name
-                                if target_stem + ".j2" == template_path:
-                                    action.pop("template")
-
-                    elif isinstance(group, (dict, list)) and len(group) == 0:
-                        continue
-                    elif (
-                        isinstance(group, bool)
-                        and group_name == "enabled"
-                        and group == True
-                    ):
-                        continue
-                    edited[group_name] = group
-
-                save_yaml(MODULES_DIR / module.name / "module.yaml", edited)
-                # save_json(MODULES_DIR / module.name / "module.json", edited)
+                save_yaml(MODULES_DIR / module.name / "module.yaml", dump)
+                # save_json(MODULES_DIR / module.name / "module.json", dump)
                 res.success(f'module "{module.name}" rewritten')
             except Exception as e:
                 res.exception(e)
@@ -286,7 +263,7 @@ class ModuleManager:
                     continue
 
                 self.modules[name] = module
-                res.success(f"module {name} cloned")
+                res.success(f'module "{name}" cloned')
 
             except Exception as e:
                 res.exception(e)
