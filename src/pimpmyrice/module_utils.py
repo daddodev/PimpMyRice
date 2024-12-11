@@ -466,8 +466,14 @@ def load_module_conf(module_name: str) -> dict[str, Any]:
 async def clone_from_folder(source: Path) -> str:
     if not (source / "module.yaml").exists():
         raise Exception(f'module not found at "{source}"')
-    shutil.copytree(source, MODULES_DIR / source.name)
-    return source.name
+
+    name = source.name
+    dest_dir = MODULES_DIR / name
+    if dest_dir.exists():
+        raise Exception(f'module "{name}" already present')
+
+    shutil.copytree(source, MODULES_DIR / name)
+    return name
 
 
 async def clone_from_git(url: str) -> str:

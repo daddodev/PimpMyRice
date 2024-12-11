@@ -223,20 +223,24 @@ class ModuleManager:
         res.ok = True
         return res
 
-    async def clone_module(self, source: str | Path | list[str | Path]) -> Result:
+    async def clone_module(self, source: str | list[str]) -> Result:
         res = Result()
 
         sources = source if isinstance(source, list) else [source]
 
         for source in sources:
             try:
-                if isinstance(source, Path):
-                    name = await mutils.clone_from_folder(source)
+                source = str(source)
+
+                if source.startswith(("git@", "http://", "https://")):
+                    name = await mutils.clone_from_git(source)
+
                 elif source.startswith("pimp://"):
                     url = f'{REPOS_BASE_ADDR}/{source.removeprefix("pimp://")}'
                     name = await mutils.clone_from_git(url)
+
                 else:
-                    name = await mutils.clone_from_git(source)
+                    name = await mutils.clone_from_folder(Path(source))
 
                 parse_res = parse_module(MODULES_DIR / name)
                 res += parse_res
@@ -261,7 +265,7 @@ class ModuleManager:
                                 )
 
                         link_path = Path(str(target) + ".j2")
-                        if link_path.exists():
+                        if link_path.exists() or link_path.is_symlink():
                             res.info(
                                 f'skipping linking "{link_path}" to "{action.template}", destination already exists'
                             )
