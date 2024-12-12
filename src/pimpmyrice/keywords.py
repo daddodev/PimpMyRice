@@ -13,5 +13,6 @@ default_base_style = {
         "inactive": {"bg": "$border.inactive", "fg": "$normal.fg"},
     },
     "animations": {"enabled": True, "speed": 2, "style": "default"},
+    "cursor": {"name": "Adwaita", "size": 24},
     "modules_styles": {},
 }
