@@ -96,6 +96,7 @@ def generate_theme_json_schema(tm: ThemeManager) -> Result:
             },
         ],
         "title": "Normal font",
+        "default": "",
     }
 
     mono_fonts = get_fonts(mono=True)
@@ -109,6 +110,7 @@ def generate_theme_json_schema(tm: ThemeManager) -> Result:
             },
         ],
         "title": "Mono font",
+        "default": "",
     }
 
     theme_schema["properties"]["tags"] = tags_schema
