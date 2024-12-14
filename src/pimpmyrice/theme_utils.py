@@ -17,7 +17,7 @@ from typing import (
     ValuesView,
 )
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, validator
 from pydantic.json_schema import SkipJsonSchema
 
 from pimpmyrice import files
@@ -74,6 +74,12 @@ class Theme(BaseModel):
     modes: dict[str, Mode] = {}
     style: Style = {}
     tags: set[str] = set()
+
+    @validator("tags", pre=True)
+    def coerce_to_set(cls, value: Any) -> Any:
+        if isinstance(value, list):
+            return set(value)
+        return value
 
 
 def dump_theme_for_file(theme: Theme) -> dict[str, Any]:

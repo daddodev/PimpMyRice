@@ -125,8 +125,10 @@ def generate_theme_json_schema(tm: ThemeManager) -> Result:
 
     theme_schema["properties"]["style"] = {"$ref": "#/$defs/Style"}
 
-    theme_schema["$defs"]["Style_font"]["properties"]["normal"] = normal_font_schema
-    theme_schema["$defs"]["Style_font"]["properties"]["mono"] = mono_font_schema
+    theme_schema["$defs"]["Style_font_normal"]["properties"][
+        "family"
+    ] = normal_font_schema
+    theme_schema["$defs"]["Style_font_mono"]["properties"]["family"] = mono_font_schema
 
     theme_schema["properties"].pop("name")
     theme_schema["properties"].pop("path")
