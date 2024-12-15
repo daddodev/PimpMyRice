@@ -26,25 +26,22 @@ class ModuleManager:
         self.modules: dict[str, Module] = {}
         self.load_modules()
 
-    def load_modules(self) -> dict[str, Module]:
-        modules: dict[str, Module] = {}
+    def load_modules(self) -> None:
         timer = Timer()
 
         for module_dir in MODULES_DIR.iterdir():
             self.load_module(module_dir)
 
-        log.debug(f"{len(modules)} modules loaded in {timer.elapsed():.4f} sec")
+        log.debug(f"{len(self.modules)} modules loaded in {timer.elapsed():.4f} sec")
 
-        return modules
-
-    def load_module(self, module_dir: Path) -> Module | None:
+    def load_module(self, module_dir: Path) -> None:
         module_res = parse_module(module_dir)
 
-        if module_res.value:
-            self.modules[module_res.value.name] = module_res.value
-            log.debug(f'module "{module_res.value.name}" loaded')
-            return module_res.value
-        return None
+        if not module_res.value:
+            return
+
+        self.modules[module_res.value.name] = module_res.value
+        log.debug(f'module "{module_res.value.name}" loaded')
 
     async def run_modules(
         self,
