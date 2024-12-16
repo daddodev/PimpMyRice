@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-import requests
 import yaml
 
 from pimpmyrice.config import (
@@ -105,6 +104,8 @@ def download_file(url: str, destination: Path = TEMP_DIR) -> Result[Path]:
     res = Result[Path]()
 
     try:
+        import requests
+
         response = requests.get(url, stream=True)
 
         if response.status_code != 200:

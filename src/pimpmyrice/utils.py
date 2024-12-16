@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Generic
 
-import cv2
 import jinja2
 import psutil
 from typing_extensions import TypeVar
@@ -219,6 +218,8 @@ class Lock:
 
 
 def get_thumbnail(image_path: Path, max_px: int = 1024) -> Path:
+    import cv2
+
     thumb_path = (
         image_path.parent / f".{image_path.stem}_thumb_{max_px}{image_path.suffix}"
     )

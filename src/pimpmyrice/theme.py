@@ -33,6 +33,7 @@ log = get_logger(__name__)
 
 
 class ThemeManager:
+
     def __init__(self) -> None:
         timer = Timer()
         check_config_dirs()
