@@ -56,11 +56,21 @@ yay -S pimpmyrice
 yay -S pimpmyrice-git
 ```
 
-#### Pipx
+#### Other distros / Windows / MacOS
+
+[Install pipx](https://github.com/pypa/pipx#install-pipx), then:
 
 ```bash
 pipx install pimpmyrice
 ```
+
+#### Verify
+
+Print the help message by running:
+```bash
+pimp
+```
+
 
 ### 📦 Add some modules
 
