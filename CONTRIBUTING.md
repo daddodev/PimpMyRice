@@ -2,6 +2,19 @@
 
 Thank you for your interest in contributing to PimpMyRice! This document provides guidelines and instructions for contributing to the project.
 
+## Table of Contents
+
+1. [Development Setup](#development-setup)
+   - [Prerequisites](#prerequisites)
+   - [Setting Up Development Environment](#setting-up-development-environment)
+   - [Running Tests](#running-tests)
+   - [Editor Setup](#editor-setup)
+2. [Contributing Guidelines](#contributing-guidelines)
+   - [Code Style](#code-style)
+   - [Submitting Changes](#submitting-changes)
+3. [Bug Reports and Feature Requests](#bug-reports-and-feature-requests)
+4. [Need Help?](#need-help)
+
 ## Development Setup
 
 ### Prerequisites
