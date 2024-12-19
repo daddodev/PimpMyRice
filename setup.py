@@ -23,7 +23,7 @@ setuptools.setup(
     entry_points={"console_scripts": ["pimp=pimpmyrice.__main__:main"]},
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.10",
+    python_requires=">=3.12",
     install_requires=[
         "docopt",
         "jinja2",
