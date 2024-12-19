@@ -22,6 +22,7 @@ cd pimpmyrice
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Linux/macOS
+.venv\Scripts\activate    # On Windows
 ```
 
 3. Install development dependencies:
