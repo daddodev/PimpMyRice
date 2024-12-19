@@ -6,7 +6,7 @@ Thank you for your interest in contributing to PimpMyRice! This document provide
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip
 - git
 
@@ -29,35 +29,30 @@ source venv/bin/activate  # On Linux/macOS
 pip install -e ".[dev]"
 ```
 
-### Building from Source
-
-To build PimpMyRice from source:
-
-1. Install build dependencies:
-```bash
-pip install build
-```
-
-2. Build the package:
-```bash
-python -m build
-```
-
-This will create both wheel (.whl) and source (.tar.gz) distributions in the `dist/` directory.
-
 ### Running Tests
 
 ```bash
 pytest
 ```
 
+### Editor Setup
+
+Set up your editor with the following tools:
+
+- **pylsp**: For Python language server features like linting, autocompletion, and code navigation.
+- **mypy**: For static type checking.
+- **black**: For automatic code formatting.
+- **pysort**: For sorting imports automatically.
+
+Most modern editors (e.g., **VSCode**, **Neovim**, etc.) support these tools through extensions or LSP plugins. Ensure your editor is configured to use the virtual environment's Python interpreter to have access to the installed tools.
+
 ## Contributing Guidelines
 
 ### Code Style
 
 - Follow PEP 8 guidelines
-- Use type hints where possible
-- Write docstrings for functions and classes
+- Use type hints
+- Use the tools listed above for formatting and linting
 - Keep code modular and maintainable
 
 ### Submitting Changes
@@ -80,28 +75,22 @@ git push origin feature/your-feature-name
 
 4. Create a Pull Request on GitHub
 
-### Creating Modules
-
-If you're creating a new module:
-
-1. Follow the [module documentation](https://pimpmyrice.vercel.app/docs/module)
-2. Include proper documentation
-3. Test your module thoroughly
-4. Submit it to the [modules repository](https://pimpmyrice.vercel.app/modules)
-
 ## Bug Reports and Feature Requests
 
-- Use the GitHub Issues tracker
-- Provide detailed information about bugs
-- For feature requests, explain the use case
+We use the GitHub Issues tracker for managing bugs and feature requests. Here’s how you can contribute:
 
-## Code of Conduct
+- Bug Reports: When reporting a bug, please provide as much detail as possible, including:
+    - Steps to reproduce the bug.
+    - Expected behavior vs. actual behavior.
+    - Any relevant log messages or error outputs.
+- Feature Requests: When suggesting a new feature, please describe the problem you’re trying to solve, how the feature would improve the app, and why it would be useful.
 
-Please note that this project follows a Code of Conduct. By participating, you are expected to uphold this code.
+Please make sure your issue has not already been reported by searching the issues list first.
 
-## Questions?
+## Need Help?
 
 If you have questions, feel free to:
-- Open an issue
-- Join our community discussions
+
+- Ask in our [Discord](https://discord.gg/TDrSB2wk6c)
 - Check the [documentation](https://pimpmyrice.vercel.app/docs) 
+- Open an issue
